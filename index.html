@@ -356,6 +356,95 @@
     }
 
     @media (max-width: 480px) {
+      
+/* Saved places */
+.save-row {
+  display: flex;
+  gap: 9px;
+}
+
+.save-row input {
+  flex: 1;
+}
+
+.place-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  margin: 20px 0 10px;
+}
+
+.place-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saved-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  background: #f8f4ec;
+  border: 1px solid #eee5d9;
+  border-radius: 12px;
+}
+
+.saved-main {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.saved-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.saved-coord {
+  color: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.saved-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.saved-action {
+  background: transparent;
+  border: 1px solid var(--sand);
+  color: var(--brown);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+
+.saved-action:hover {
+  background: #eee7dc;
+}
+
+.empty-message {
+  color: #b4a897;
+  text-align: center;
+  font-size: 12px;
+  padding: 16px 8px;
+}
+
+.clear-btn {
+  color: var(--accent-dark);
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+}
+
       .app {
         padding: 25px 15px 35px;
       }
@@ -426,11 +515,54 @@
         </div>
       </div>
     </section>
+    
+<!-- Favorites and Recent History -->
+<section class="panel">
+  <div class="section-title">
+    <span class="section-number">03</span>
+    My Places
+  </div>
+
+  <div class="save-row">
+    <input
+      id="favoriteName"
+      type="text"
+      placeholder="Name this location..."
+      maxlength="30"
+    />
+    <button class="search-btn" id="saveFavoriteBtn">
+      + Save
+    </button>
+  </div>
+
+  <div class="place-heading">
+    <span>★ FAVORITES</span>
+  </div>
+
+  <div id="favoriteList" class="place-list">
+    <div class="empty-message">
+      No favorite places yet.
+    </div>
+  </div>
+
+  <div class="place-heading">
+    <span>◷ RECENTLY USED</span>
+    <button class="clear-btn" id="clearRecentBtn">
+      Clear all
+    </button>
+  </div>
+
+  <div id="recentList" class="place-list">
+    <div class="empty-message">
+      No recent locations yet.
+    </div>
+  </div>
+</section>
 
     <!-- Coordinates -->
     <section class="panel">
       <div class="section-title">
-        <span class="section-number">03</span>
+        <span class="section-number">04</span>
         Set coordinates
       </div>
 
@@ -549,6 +681,202 @@
     const combinedInput = document.getElementById("combined");
     const preview = document.getElementById("preview");
     const status = document.getElementById("status");
+    
+// =====================================
+// FlyPin: Favorites & Recent Locations
+// =====================================
+
+const FAVORITES_KEY = "flypin_favorites";
+const RECENT_KEY = "flypin_recent";
+
+function loadPlaces(key) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key));
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function savePlaces(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch {
+    status.textContent = "Unable to save data in this browser.";
+    return false;
+  }
+}
+
+let favorites = loadPlaces(FAVORITES_KEY);
+let recentLocations = loadPlaces(RECENT_KEY);
+
+// Render saved locations
+function renderSavedPlaces() {
+  const favoriteList =
+    document.getElementById("favoriteList");
+
+  const recentList =
+    document.getElementById("recentList");
+
+  favoriteList.innerHTML = "";
+  recentList.innerHTML = "";
+
+  renderPlaceItems(
+    favoriteList,
+    favorites,
+    "favorite"
+  );
+
+  renderPlaceItems(
+    recentList,
+    recentLocations,
+    "recent"
+  );
+}
+
+function renderPlaceItems(container, places, type) {
+  if (places.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-message";
+    empty.textContent =
+      type === "favorite"
+        ? "No favorite places yet."
+        : "No recent locations yet.";
+
+    container.appendChild(empty);
+    return;
+  }
+
+  places.forEach((place, index) => {
+    const item = document.createElement("div");
+    item.className = "saved-item";
+
+    const main = document.createElement("div");
+    main.className = "saved-main";
+
+    const name = document.createElement("div");
+    name.className = "saved-name";
+    name.textContent = place.name;
+
+    const coord = document.createElement("div");
+    coord.className = "saved-coord";
+    coord.textContent =
+      `${place.lat.toFixed(5)}, ${place.lng.toFixed(5)}`;
+
+    main.appendChild(name);
+    main.appendChild(coord);
+
+    main.addEventListener("click", () => {
+      setLocation(place.lat, place.lng, 16);
+      status.textContent =
+        `Location loaded: ${place.name}`;
+    });
+
+    const actions = document.createElement("div");
+    actions.className = "saved-actions";
+
+    const remove = document.createElement("button");
+    remove.className = "saved-action";
+    remove.textContent = "Delete";
+
+    remove.addEventListener("click", () => {
+      if (type === "favorite") {
+        favorites.splice(index, 1);
+        savePlaces(FAVORITES_KEY, favorites);
+      } else {
+        recentLocations.splice(index, 1);
+        savePlaces(RECENT_KEY, recentLocations);
+      }
+
+      renderSavedPlaces();
+    });
+
+    actions.appendChild(remove);
+    item.appendChild(main);
+    item.appendChild(actions);
+    container.appendChild(item);
+  });
+}
+
+// Save current location as favorite
+document
+  .getElementById("saveFavoriteBtn")
+  .addEventListener("click", () => {
+    const input =
+      document.getElementById("favoriteName");
+
+    const name = input.value.trim();
+
+    if (!name) {
+      status.textContent =
+        "Please enter a name for this location.";
+      input.focus();
+      return;
+    }
+
+    const place = {
+      name: name,
+      lat: currentLat,
+      lng: currentLng
+    };
+
+    favorites.unshift(place);
+
+    if (!savePlaces(FAVORITES_KEY, favorites)) {
+      favorites.shift();
+      return;
+    }
+
+    input.value = "";
+    renderSavedPlaces();
+
+    status.textContent = `${name} added to favorites.`;
+  });
+
+// Save recent location when Confirm Fly is pressed
+function saveRecentLocation() {
+  const searchName =
+    document.getElementById("placeSearch").value.trim();
+
+  const place = {
+    name: searchName || "Manual location",
+    lat: currentLat,
+    lng: currentLng
+  };
+
+  // Avoid duplicate consecutive coordinates
+  recentLocations = recentLocations.filter(
+    old =>
+      old.lat.toFixed(5) !== currentLat.toFixed(5) ||
+      old.lng.toFixed(5) !== currentLng.toFixed(5)
+  );
+
+  recentLocations.unshift(place);
+
+  // Keep only the latest 8 records
+  recentLocations = recentLocations.slice(0, 8);
+
+  if (savePlaces(RECENT_KEY, recentLocations)) {
+    renderSavedPlaces();
+  }
+}
+
+// Clear recent history
+document
+  .getElementById("clearRecentBtn")
+  .addEventListener("click", () => {
+    recentLocations = [];
+
+    savePlaces(RECENT_KEY, recentLocations);
+    renderSavedPlaces();
+
+    status.textContent = "Recent history cleared.";
+  });
+
+// Initial rendering
+renderSavedPlaces();
+
 
     function validCoordinates(lat, lng) {
       return (
@@ -752,6 +1080,7 @@
           `Location confirmed: ${value.latitude.toFixed(6)}, ${value.longitude.toFixed(6)}`;
 
         console.log("FlyPin selected location:", value);
+        saveRecentLocation();
 
         const flyButton = document.getElementById("flyBtn");
         flyButton.textContent = "✓ LOCATION CONFIRMED";
