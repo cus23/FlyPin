@@ -218,7 +218,7 @@
       background: var(--cream);
     }
     #confirmBtn {
-      flex: 1 1 100%;
+      width: 100%;
       min-height: 56px;
       font-size: 17px;
       font-weight: 800;
@@ -260,11 +260,31 @@
 
     .action-row {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
       margin-top: 16px;
+      width: 100%;
     }
-
+    .secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+    .secondary-actions button {
+      width: 100%;
+      min-height: 44px;
+      background: #f1ece3;
+      color: #998875;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #e9dfd0;
+    }
+    
+    .secondary-actions button:hover {
+      background: #e9dfd0;
+      color: #75604c;
+    }
     .favorite-save-row {
       display: flex;
       gap: 10px;
@@ -598,13 +618,15 @@
       </div>
       
       <div class="action-row">
-        <button class="btn" id="applyCoordsBtn" type="button">
-          Apply coordinates
-        </button>
+        <div class="secondary-actions">
+          <button class="btn btn-secondary" id="applyCoordsBtn" type="button">
+            Apply
+          </button>
       
-        <button class="btn btn-secondary" id="copyBtn" type="button">
-          Copy coordinates
-        </button>
+          <button class="btn btn-secondary" id="copyBtn" type="button">
+            Copy
+          </button>
+        </div>
       
         <button class="btn" id="confirmBtn" type="button">
           Confirm Fly
