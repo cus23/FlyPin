@@ -2,6 +2,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f7f3eb">
@@ -62,7 +65,7 @@
       margin: 0 auto;
       padding: 30px 0 50px;
     }
-
+    
     header {
       display: flex;
       justify-content: space-between;
@@ -86,8 +89,10 @@
 
     .brand h1 {
       margin: 0;
-      font-size: 25px;
-      letter-spacing: 1px;
+      font-family: "DM Serif Display", Georgia, serif;
+      font-size: 30px;
+      font-weight: 400;
+      letter-spacing: 1.5px;
     }
 
     .brand p {
@@ -212,7 +217,15 @@
     .search-result:hover {
       background: var(--cream);
     }
-
+    #confirmBtn {
+      flex: 1 1 100%;
+      min-height: 56px;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      border-radius: 14px;
+      box-shadow: 0 5px 14px rgba(128, 99, 71, 0.18);
+    }
     #map {
       height: 390px;
       width: 100%;
@@ -583,14 +596,16 @@
           placeholder="25.0330, 121.5654"
         >
       </div>
-
+      
       <div class="action-row">
         <button class="btn" id="applyCoordsBtn" type="button">
           Apply coordinates
         </button>
+      
         <button class="btn btn-secondary" id="copyBtn" type="button">
           Copy coordinates
         </button>
+      
         <button class="btn" id="confirmBtn" type="button">
           Confirm Fly
         </button>
