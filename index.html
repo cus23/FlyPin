@@ -629,9 +629,13 @@
         </div>
       
         <button class="btn" id="confirmBtn" type="button">
-          Confirm Fly
+          Save Selection
         </button>
       </div>
+
+      <p class="small-note" id="locationScopeNote">
+        This saves the selected coordinates in FlyPin's recent places only. It does not change your iPhone's system location or the location other apps receive.
+      </p>
 
       <div class="favorite-save-row">
         <input
@@ -1157,7 +1161,7 @@
         }
       });
 
-    // Confirm Fly
+    // Save selection in FlyPin recent places
     document
       .getElementById("confirmBtn")
       .addEventListener("click", function () {
@@ -1177,7 +1181,7 @@
         if (savePlaces(RECENT_KEY, recentPlaces)) {
           renderSavedPlaces();
           setStatus(
-            "Location confirmed in FlyPin: " +
+            "Saved in FlyPin recent places only; iPhone system location is unchanged: " +
             formatCoordinate(currentLat) + ", " +
             formatCoordinate(currentLng)
           );
