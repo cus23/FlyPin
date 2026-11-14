@@ -17,9 +17,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.3.0</string>
+    <string>0.4.0</string>
     <key>CFBundleVersion</key>
-    <string>4</string>
+    <string>5</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>CFBundleURLTypes</key>
@@ -33,8 +33,6 @@
             </array>
         </dict>
     </array>
-    <key>NSHealthShareUsageDescription</key>
-    <string>FlyPin Companion reads today's step-count data from Apple Health so FlyPin can include steps recorded by supported health sources.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>FlyPin Companion needs local network access to connect to this iPhone's developer service through LocalDevVPN.</string>
     <key>UILaunchScreen</key>
