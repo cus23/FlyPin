@@ -63,7 +63,7 @@ final class CompanionModel: ObservableObject {
             guard let callbackURL = components.url else {
                 throw StepCounterError.invalidCallback
             }
-            UIApplication.shared.open(callbackURL)
+            _ = await UIApplication.shared.open(callbackURL)
         } catch {
             status = "讀取步數失敗：\(error.localizedDescription)"
             errorMessage = status
