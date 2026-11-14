@@ -1,0 +1,108 @@
+name: Build FlyPin Companion
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/ios-companion-mvp
+    paths:
+      - "ios/Companion/Sources/**"
+      - "ios/Companion/project.yml"
+      - "ios/Companion/Info.plist"
+      - "ios/Companion/FlyPinCompanion.entitlements"
+      - "ios/Companion/scripts/fetch-idevice.sh"
+      - ".github/workflows/ios-companion.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flypin-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.0.1"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Fetch and verify pinned idevice FFI
+        working-directory: ios/Companion
+        run: ./scripts/fetch-idevice.sh
+
+      - name: Verify Swift sources do not contain pairing credentials
+        run: |
+          if grep -R -nE '(HostPrivateKey|EscrowBag|SystemBUID)' ios/Companion/Sources; then
+            echo "Sensitive pairing material must not be hardcoded." >&2
+            exit 1
+          fi
+
+      - name: Generate Xcode project
+        working-directory: ios/Companion
+        run: xcodegen generate
+
+      - name: Build unsigned app
+        working-directory: ios/Companion
+        run: |
+          set -euo pipefail
+          xcodebuild clean build \
+            -project FlyPinCompanion.xcodeproj \
+            -scheme FlyPinCompanion \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Package app and checksum
+        working-directory: ios/Companion
+        run: |
+          set -euo pipefail
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/FlyPinCompanion.app"
+          test -d "$APP_PATH"
+          mkdir -p build/release build/ipa/Payload
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/release/FlyPinCompanion-unsigned.zip
+          ditto "$APP_PATH" build/ipa/Payload/FlyPinCompanion.app
+          (cd build/ipa && /usr/bin/zip -qry ../release/FlyPinCompanion-unsigned.ipa Payload)
+          /usr/bin/unzip -t build/release/FlyPinCompanion-unsigned.ipa
+          /usr/bin/unzip -Z1 build/release/FlyPinCompanion-unsigned.ipa | grep -qx 'Payload/FlyPinCompanion.app/Info.plist'
+          plutil -lint "$APP_PATH/Info.plist"
+          shasum -a 256 build/release/FlyPinCompanion-unsigned.zip build/release/FlyPinCompanion-unsigned.ipa > build/release/SHA256SUMS.txt
+
+      - name: Upload short-lived workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlyPinCompanion-unsigned-app
+          path: |
+            ios/Companion/build/release/*
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Move persistent latest tag
+        run: |
+          git tag -f companion-latest "$GITHUB_SHA"
+          git push origin refs/tags/companion-latest --force
+
+      - name: Publish persistent GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: companion-latest
+          name: FlyPin Companion - Latest
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          files: |
+            ios/Companion/build/release/*
