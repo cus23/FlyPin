@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f7f4ed">
   <meta name="description" content="FlyPin — Choose and manage locations on a map.">
-
   <title>FlyPin</title>
 
   <link rel="icon" type="image/png" href="./icon.png">
   <link rel="apple-touch-icon" href="./icon.png">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
   <style>
@@ -238,6 +235,19 @@
       color: white;
     }
 
+    /* Apply and Copy use light-colored buttons */
+    .btn-light {
+      border-color: var(--line);
+      background: #f5f0e7;
+      color: #625c50;
+    }
+
+    .btn-light:hover {
+      border-color: #d6c7b5;
+      background: #eee8dc;
+      color: var(--accent-dark);
+    }
+
     .btn-soft {
       background: var(--soft);
       border-color: var(--soft);
@@ -291,7 +301,8 @@
     }
 
     .field label,
-    .combined-input label {
+    .combined-input label,
+    .favorite-name-field label {
       display: block;
       margin-bottom: 7px;
       color: var(--muted);
@@ -313,32 +324,8 @@
       margin-top: 12px;
     }
 
-    .selected-location {
+    .favorite-name-field {
       margin-top: 15px;
-      padding: 13px;
-      border-radius: 10px;
-      background: #f5f0e7;
-    }
-
-    .selected-label {
-      margin-bottom: 6px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .selected-coordinates {
-      font-size: 13px;
-      font-weight: 600;
-      overflow-wrap: anywhere;
-    }
-
-    .selected-hint {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 11px;
     }
 
     .action-button {
@@ -347,8 +334,6 @@
       margin-top: 12px;
       font-size: 13px;
     }
-
-    /* Right sidebar navigation */
 
     .side-menu {
       display: grid;
@@ -593,7 +578,6 @@
 
 <body>
   <div class="app">
-
     <header>
       <div class="brand">
         <img class="brand-icon" src="./icon.png" alt="FlyPin icon">
@@ -603,7 +587,6 @@
     </header>
 
     <main>
-
       <section class="map-panel">
         <div class="map-tip">Click anywhere on the map to place your pin</div>
         <div id="map" aria-label="Interactive location map"></div>
@@ -613,7 +596,6 @@
       </section>
 
       <aside class="sidebar">
-
         <section class="panel">
           <h2 class="section-title">Search a place</h2>
 
@@ -648,8 +630,8 @@
           </div>
 
           <div class="coordinate-actions">
-            <button id="applyCoordinates" class="btn btn-primary" type="button">Apply</button>
-            <button id="copyCoordinates" class="btn" type="button">Copy</button>
+            <button id="applyCoordinates" class="btn btn-light" type="button">Apply</button>
+            <button id="copyCoordinates" class="btn btn-light" type="button">Copy</button>
           </div>
 
           <div class="combined-input">
@@ -660,16 +642,18 @@
                 type="text"
                 placeholder="25.0330, 121.5654"
               >
-              <button id="applyCombined" class="btn" type="button">Go</button>
+              <button id="applyCombined" class="btn btn-light" type="button">Go</button>
             </div>
           </div>
 
-          <div class="selected-location">
-            <div class="selected-label">Selected location</div>
-            <div id="selectedCoordinates" class="selected-coordinates">
-              25.0330, 121.5654
-            </div>
-            <div class="selected-hint">Click the map or drag the pin to change.</div>
+          <div class="favorite-name-field">
+            <label for="favoriteName">Location name (optional)</label>
+            <input
+              id="favoriteName"
+              type="text"
+              maxlength="80"
+              placeholder="Give this location a name..."
+            >
           </div>
 
           <button id="saveFavorite" class="btn btn-soft action-button" type="button">
@@ -698,6 +682,7 @@
             <h2 class="section-title">Favorites</h2>
             <button id="clearFavorites" class="text-btn" type="button">Clear all</button>
           </div>
+
           <div id="favoritesList" class="place-list">
             <div class="empty-state">No favorites saved yet.</div>
           </div>
@@ -708,6 +693,7 @@
             <h2 class="section-title">Recent locations</h2>
             <button id="clearRecent" class="text-btn" type="button">Clear</button>
           </div>
+
           <div id="recentList" class="place-list">
             <div class="empty-state">No recent locations.</div>
           </div>
@@ -715,16 +701,17 @@
 
         <section id="backupPanel" class="panel menu-content">
           <h2 class="section-title">Backup your data</h2>
+
           <p class="backup-description">
             Export your saved locations or import a previous FlyPin backup.
           </p>
+
           <div class="backup-actions">
             <button id="exportData" class="btn" type="button">Export JSON</button>
             <button id="importData" class="btn" type="button">Import JSON</button>
             <input id="importFile" type="file" accept=".json,application/json" hidden>
           </div>
         </section>
-
       </aside>
     </main>
   </div>
@@ -763,7 +750,7 @@
     const latitudeInput = $("latitude");
     const longitudeInput = $("longitude");
     const combinedInput = $("combinedCoordinates");
-    const selectedCoordinates = $("selectedCoordinates");
+    const favoriteNameInput = $("favoriteName");
     const searchInput = $("searchInput");
     const searchResults = $("searchResults");
     const favoritesList = $("favoritesList");
@@ -948,13 +935,15 @@
       marker.setLatLng([lat, lng]);
 
       if (options.pan !== false) {
-        map.setView([lat, lng], options.zoom || Math.max(map.getZoom(), 14));
+        map.setView(
+          [lat, lng],
+          options.zoom || Math.max(map.getZoom(), 14)
+        );
       }
 
       latitudeInput.value = lat.toFixed(6);
       longitudeInput.value = lng.toFixed(6);
       combinedInput.value = formatCoordinates(lat, lng);
-      selectedCoordinates.textContent = formatCoordinates(lat, lng);
 
       return true;
     }
@@ -1175,7 +1164,6 @@
 
           searchResults.classList.remove("show");
           searchInput.value = result.name || result.display_name;
-
           showMessage("Search result selected.");
         });
 
@@ -1197,9 +1185,11 @@
     // ==========================================
 
     function addFavorite() {
+      const customName = favoriteNameInput.value.trim();
+
       const place = normalizePlace({
         ...selectedLocation,
-        name: selectedLocation.name || "Saved location"
+        name: customName || "Unnamed location"
       });
 
       const alreadyExists = favorites.some((item) =>
@@ -1226,6 +1216,7 @@
       favorites = nextFavorites;
       renderFavorites();
 
+      favoriteNameInput.value = "";
       showMessage("Added to favorites.");
     }
 
@@ -1256,13 +1247,18 @@
 
       favorites.forEach((place, index) => {
         favoritesList.appendChild(
-          createPlaceItem(place, () => {
-            updateSelectedLocation(place.lat, place.lng, {
-              name: place.name,
-              zoom: 15
-            });
-            showMessage("Favorite location selected.");
-          }, () => removeFavorite(index))
+          createPlaceItem(
+            place,
+            () => {
+              updateSelectedLocation(place.lat, place.lng, {
+                name: place.name,
+                zoom: 15
+              });
+
+              showMessage("Favorite location selected.");
+            },
+            () => removeFavorite(index)
+          )
         );
       });
     }
@@ -1288,6 +1284,7 @@
               name: place.name,
               zoom: 15
             });
+
             showMessage("Recent location selected.");
           })
         );
@@ -1344,6 +1341,7 @@
 
       favorites = [];
       renderFavorites();
+
       showMessage("All favorites cleared.");
     });
 
@@ -1354,6 +1352,7 @@
 
       recentLocations = [];
       renderRecent();
+
       showMessage("Recent locations cleared.");
     });
 
@@ -1404,7 +1403,6 @@
 
     $("importFile").addEventListener("change", async (event) => {
       const file = event.target.files[0];
-
       if (!file) return;
 
       try {
@@ -1475,6 +1473,7 @@
       } catch (error) {
         console.error(error);
         showMessage("Import failed. Please select a valid FlyPin JSON backup.");
+
       } finally {
         event.target.value = "";
       }
