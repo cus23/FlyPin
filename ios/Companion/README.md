@@ -16,12 +16,16 @@ Native companion for the existing FlyPin map website. The website selects coordi
 
 ## Intended use flow
 
-1. On the iPhone, install FlyPin Companion and LocalDevVPN.
-2. Import the iPhone's RPPairing record into Companion.
-3. Open LocalDevVPN, enable its tunnel, then return to Companion.
-4. Tap **Connect & Prepare** once. Companion creates the RSD tunnel, downloads and verifies the pinned Cryptex DDI assets, then asks Apple to personalize/install the DDI.
-5. Open FlyPin on the iPhone in Safari and use **Send location to iPhone**. For a Windows browser, scan the generated QR code with the iPhone camera and tap the handoff page's button.
-6. Companion receives the coordinate and applies it through DVT. Use Stop to clear the simulation.
+1. On Windows, install iTunes (the USB device support required by the pairing utility) and download the [idevice_pair 1.1.0 Windows build](https://github.com/jkcoxson/idevice_pair/releases/download/v1.1.0/idevice_pair--windows-x86_64.exe).
+2. Connect the iPhone by USB, unlock it, and tap **Trust** if prompted. In idevice_pair, select the iPhone, choose **Remote pairing**, create an RPPairing record, and save it to a file. Do not choose a Lockdown-only record.
+3. Transfer the pairing file to the iPhone using iCloud Drive or another private file-transfer method.
+4. Install FlyPin Companion and LocalDevVPN on the iPhone. Import the RPPairing file in Companion.
+5. Open LocalDevVPN, enable its tunnel, then return to Companion.
+6. Tap **Connect & Prepare** once. Companion creates the RSD tunnel, downloads and verifies the pinned Cryptex DDI assets, then asks Apple's TSS service to personalize/install the DDI.
+7. Open FlyPin on the iPhone in Safari and use **Send location to iPhone**. If using the Windows browser, scan the generated QR code with the iPhone camera and tap the handoff page's button.
+8. Companion receives the coordinate and applies it through DVT. Later location changes can be sent from the same index page. Use Stop to clear the simulation.
+
+The pairing record is sensitive. Keep it out of GitHub, screenshots, chat messages, and shared folders. The USB step is only for initial pairing; later sessions use the LocalDevVPN/RSD path over the supported network.
 
 ## Windows + iPhone build workflow
 
