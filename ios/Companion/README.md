@@ -1,6 +1,6 @@
 # FlyPin Companion (iOS)
 
-This is the first native-app scaffold for FlyPin. It is deliberately separate from the existing GitHub Pages site.
+This is the native companion for the existing FlyPin GitHub Pages website. The website remains the map and coordinate-selection interface; this app handles iPhone-side pairing and developer-service communication.
 
 ## Current scope
 
@@ -9,26 +9,36 @@ This is the first native-app scaffold for FlyPin. It is deliberately separate fr
 - Coordinate range validation
 - Local pairing-file import with iOS file protection, POSIX mode 0600, and backup exclusion
 - Explicit LocalDevVPN app handoff
-- Fail-closed placeholder for DVT start/stop
+- Pinned, SHA-256-verified `idevice` FFI dependency fetched only during the macOS build
+- RSD developer-tunnel connection implementation (requires an imported pairing record and a working LocalDevVPN tunnel)
+- Unsigned app package published to a persistent GitHub pre-release
 
 ## Not implemented yet
 
-**This build does not change the iPhone's system location.** The DVT/RSD transport, Developer Disk Image acquisition and integrity verification, tunnel readiness check, and real start/move/clear calls are not integrated. Start and Stop are disabled on purpose.
+**This build does not yet change the iPhone's system location.** Developer Disk Image acquisition, device-build matching, image signature/integrity validation, personalized image mounting, and end-to-end physical-device testing are still required before enabling location simulation. Start and Stop remain disabled until those steps are implemented and verified.
 
-## Build
+## Windows + iPhone workflow
+
+You do not need a Mac on your Windows PC. GitHub Actions uses a hosted macOS runner with Xcode 26 to build the app. The latest unsigned build is published to:
+
+https://github.com/cus23/FlyPin/releases/tag/companion-latest
+
+The release contains `FlyPinCompanion-unsigned.zip` and `SHA256SUMS.txt`. The release is retained until it is manually deleted; it is separate from the seven-day Actions artifact.
+
+**Important:** the ZIP contains an unsigned `.app`, not an installable IPA. Installing it on an iPhone requires code signing and a provisioning profile. A Windows PC can download and keep the release, but cannot replace Apple's signing/provisioning requirements.
+
+## Build locally
 
 Requires macOS with Xcode 26 and XcodeGen:
 
 ```sh
+./scripts/fetch-idevice.sh
 brew install xcodegen
-cd ios/Companion
 xcodegen generate
 xcodebuild -project FlyPinCompanion.xcodeproj -scheme FlyPinCompanion \
   -sdk iphoneos -configuration Debug \
   -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
 ```
-
-The GitHub Actions workflow builds the unsigned `.app` bundle and uploads it as a short-lived artifact (7-day retention). It does not export an IPA. Installing the app on a physical iPhone still requires a valid signing and provisioning method; an unsigned build is not directly installable.
 
 ## Security rules
 
@@ -37,3 +47,5 @@ The GitHub Actions workflow builds the unsigned `.app` bundle and uploads it as 
 - Treat Developer Support files as supply-chain inputs: pin the source revision and verify published hashes before mounting.
 - Do not report a location as active unless the DVT service confirms the operation.
 - iOS Developer Mode is required for the intended developer-service path.
+- LocalDevVPN's app-open callback is not proof that its tunnel is connected.
+- iOS may suspend the companion app; persistent background operation is not guaranteed.

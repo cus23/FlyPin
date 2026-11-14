@@ -10,7 +10,7 @@ on:
       - ".github/workflows/ios-companion.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Select Xcode 26
         uses: maxim-lobanov/setup-xcode@v1
@@ -26,6 +28,10 @@ jobs:
 
       - name: Install XcodeGen
         run: brew install xcodegen
+
+      - name: Fetch and verify pinned idevice FFI
+        working-directory: ios/Companion
+        run: ./scripts/fetch-idevice.sh
 
       - name: Generate Xcode project
         working-directory: ios/Companion
@@ -45,10 +51,40 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      - name: Upload unsigned app artifact
+      - name: Package app and checksum
+        working-directory: ios/Companion
+        run: |
+          set -euo pipefail
+          APP_PATH="build/DerivedData/Build/Products/Release-iphoneos/FlyPinCompanion.app"
+          test -d "$APP_PATH"
+          mkdir -p build/release
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/release/FlyPinCompanion-unsigned.zip
+          shasum -a 256 build/release/FlyPinCompanion-unsigned.zip > build/release/SHA256SUMS.txt
+
+      - name: Upload short-lived workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: FlyPinCompanion-unsigned-app
-          path: ios/Companion/build/DerivedData/Build/Products/Release-iphoneos/FlyPinCompanion.app
+          path: |
+            ios/Companion/build/release/FlyPinCompanion-unsigned.zip
+            ios/Companion/build/release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 7
+
+      - name: Move persistent latest tag
+        run: |
+          git tag -f companion-latest "$GITHUB_SHA"
+          git push origin refs/tags/companion-latest --force
+
+      - name: Publish persistent GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: companion-latest
+          name: FlyPin Companion - Latest
+          prerelease: true
+          make_latest: false
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          files: |
+            ios/Companion/build/release/FlyPinCompanion-unsigned.zip
+            ios/Companion/build/release/SHA256SUMS.txt

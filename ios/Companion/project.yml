@@ -27,3 +27,8 @@ targets:
         CODE_SIGN_ENTITLEMENTS: FlyPinCompanion.entitlements
         SUPPORTS_MACCATALYST: NO
         SWIFT_STRICT_CONCURRENCY: minimal
+        CLANG_ENABLE_MODULES: YES
+        HEADER_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/Vendor/idevice"
+        LIBRARY_SEARCH_PATHS: "$(inherited) $(PROJECT_DIR)/Vendor/idevice"
+        SWIFT_INCLUDE_PATHS: "$(inherited) $(PROJECT_DIR)/Vendor/idevice"
+        OTHER_LDFLAGS: "$(inherited) -lidevice_ffi"
