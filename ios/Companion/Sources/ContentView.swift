@@ -15,17 +15,6 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Apple 健康步數") {
-                    Button {
-                        Task { await model.readHealthStepsAndReturnToWeb() }
-                    } label: {
-                        Label("讀取健康 App 今日步數並返回 FlyPin", systemImage: "heart.text.square")
-                    }
-                    Text("透過 HealthKit 讀取 Apple 健康中可授權讀取的今日步數來源。FlyPin 自訂步數只會保存在 FlyPin，不會寫入 Apple 健康。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-
                 Section("裝置配對") {
                     HStack {
                         Text("配對檔")
