@@ -33,9 +33,9 @@ No Mac is required on the Windows PC. GitHub Actions uses a hosted macOS runner 
 
 https://github.com/cus23/FlyPin/releases/tag/companion-latest
 
-The Release contains an unsigned `.app` archive and SHA256 checksum. It is retained until manually deleted, unlike the seven-day Actions artifact.
+The Release contains an unsigned `.app` archive, an unsigned `.ipa` package for Windows sideloading tools, and SHA256 checksums. It is retained until manually deleted, unlike the seven-day Actions artifact.
 
-**Installation still requires signing and provisioning.** The unsigned archive is not an installable IPA. The project does not claim that a Windows PC can bypass Apple's code-signing requirements.
+**The IPA is not signed.** On Windows, use a trusted sideloading/signing utility with your own Apple ID to sign and install it locally. Do not upload Apple ID credentials, signing certificates, or provisioning profiles to this repository or GitHub Actions. Apple's normal signing and provisioning rules still apply.
 
 ## Compatibility and limits
 
