@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ed">
+  <title>Send to FlyPin Companion</title>
+  <style>
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f4ed;color:#292820;font-family:Arial,sans-serif}
+    main{width:min(360px,calc(100% - 40px));padding:28px;border:1px solid #e8e3d8;border-radius:18px;background:#fffdf8;text-align:center}
+    h1{font-size:22px}p{font-size:14px;line-height:1.6;color:#6d685e}
+    button{width:100%;height:46px;border:0;border-radius:10px;background:#a66e4e;color:#fff;font-size:14px;font-weight:700}
+    code{display:block;margin-top:14px;font-size:12px;color:#6d685e}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>FlyPin</h1>
+    <p id="coords">Preparing your selected coordinates…</p>
+    <button id="openCompanion" type="button">Open FlyPin Companion</button>
+    <code id="fallback"></code>
+  </main>
+  <script>
+    "use strict";
+    const params = new URLSearchParams(location.search);
+    const lat = Number(params.get("lat"));
+    const lon = Number(params.get("lon"));
+    const valid = Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    const button = document.getElementById("openCompanion");
+    const coords = document.getElementById("coords");
+    const fallback = document.getElementById("fallback");
+    if (!valid) {
+      coords.textContent = "The coordinates in this link are invalid.";
+      button.disabled = true;
+    } else {
+      coords.textContent = `Selected location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+      const target = `flypin-companion://set-location?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
+      button.addEventListener("click", () => { location.href = target; });
+      fallback.textContent = "If the app does not open, install FlyPin Companion and try again.";
+    }
+  </script>
+</body>
+</html>

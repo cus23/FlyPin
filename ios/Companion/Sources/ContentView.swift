@@ -10,7 +10,7 @@ struct ContentView: View {
                 Section("FlyPin 座標") {
                     coordinateRow("緯度", value: model.coordinate.latitude)
                     coordinateRow("經度", value: model.coordinate.longitude)
-                    Text("座標由 FlyPin 網頁透過 flypin-companion://set-location 傳入。")
+                    Text("從 FlyPin 網頁選取位置後，座標會自動傳到這裡。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -25,32 +25,52 @@ struct ContentView: View {
                     Button("匯入此 iPhone 的配對檔") {
                         model.showingPairingImporter = true
                     }
-                    Text("配對檔是敏感憑證，只儲存在本機受保護的 App Support 目錄，不會上傳。")
+                    Text("配對檔只儲存在本機受保護的 App Support 目錄，不會上傳。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
 
                 Section("LocalDevVPN") {
-                    Button("開啟 LocalDevVPN") {
-                        model.openLocalDevVPN()
-                    }
-                    Text("開啟回呼不代表隧道已連線；正式版本會在此處加入實際連線驗證。")
+                    Button("開啟 LocalDevVPN") { model.openLocalDevVPN() }
+                    Text("啟動後切回 FlyPin Companion，再按下方連線。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
 
+                Section("裝置準備") {
+                    Button {
+                        model.prepareDevice()
+                    } label: {
+                        if model.isBusy {
+                            HStack { ProgressView(); Text("處理中…") }
+                        } else {
+                            Text("連線與準備（RSD + Developer Image）")
+                        }
+                    }
+                    .disabled(model.isBusy || !model.pairingImported)
+
+                    if model.isPrepared {
+                        Label("裝置已準備", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                }
+
                 Section("定位模擬") {
-                    Button("Start（尚未啟用）") {
-                        model.startSimulation()
+                    Button("套用目前座標") {
+                        Task { await model.applySelectedCoordinate() }
                     }
-                    .disabled(true)
+                    .disabled(model.isBusy || !model.pairingImported)
 
-                    Button("Stop（尚未啟用）", role: .destructive) {
-                        model.stopSimulation()
+                    Button("停止並清除模擬定位", role: .destructive) {
+                        Task { await model.clearSimulation() }
                     }
-                    .disabled(true)
+                    .disabled(model.isBusy || !model.pairingImported)
 
-                    Text("DVT / RSD 傳輸尚未整合。按鈕目前刻意停用，避免顯示不實的定位成功狀態。")
+                    if model.isSimulating {
+                        Label("定位模擬已啟用", systemImage: "location.fill")
+                            .foregroundStyle(.green)
+                    }
+                    Text("若已完成準備，從 FlyPin 網頁再次送出座標即可切換位置。")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -58,6 +78,7 @@ struct ContentView: View {
                 Section("狀態") {
                     Text(model.status)
                         .font(.callout)
+                        .textSelection(.enabled)
                 }
             }
             .navigationTitle("FlyPin Companion")
@@ -71,9 +92,7 @@ struct ContentView: View {
                 get: { model.errorMessage != nil },
                 set: { if !$0 { model.errorMessage = nil } }
             )) {
-                Button("確定", role: .cancel) {
-                    model.errorMessage = nil
-                }
+                Button("確定", role: .cancel) { model.errorMessage = nil }
             } message: {
                 Text(model.errorMessage ?? "")
             }

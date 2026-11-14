@@ -33,6 +33,13 @@ jobs:
         working-directory: ios/Companion
         run: ./scripts/fetch-idevice.sh
 
+      - name: Verify Swift sources do not contain pairing credentials
+        run: |
+          if grep -R -nE '(HostPrivateKey|EscrowBag|SystemBUID)' ios/Companion/Sources; then
+            echo "Sensitive pairing material must not be hardcoded." >&2
+            exit 1
+          fi
+
       - name: Generate Xcode project
         working-directory: ios/Companion
         run: xcodegen generate

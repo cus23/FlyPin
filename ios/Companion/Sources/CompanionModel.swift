@@ -10,6 +10,11 @@ final class CompanionModel: ObservableObject {
     @Published var pairingImported = PairingFileStore.exists
     @Published var showingPairingImporter = false
     @Published var errorMessage: String?
+    @Published private(set) var isPrepared = false
+    @Published private(set) var isSimulating = false
+    @Published private(set) var isBusy = false
+
+    private let bridge = DeveloperServiceBridge()
 
     func handleIncomingURL(_ url: URL) {
         guard url.scheme == "flypin-companion",
@@ -24,7 +29,11 @@ final class CompanionModel: ObservableObject {
         }
 
         coordinate = newCoordinate
-        status = "已收到 FlyPin 座標；尚未套用至系統定位"
+        if isPrepared {
+            Task { await applySelectedCoordinate() }
+        } else {
+            status = "已收到網頁座標。先完成「連線與準備」，之後可直接從網頁切換位置。"
+        }
     }
 
     func importPairingFile(_ result: Result<[URL], Error>) {
@@ -40,30 +49,95 @@ final class CompanionModel: ObservableObject {
             }
         case .failure(let error):
             let nsError = error as NSError
-            guard !(nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError) else {
-                return
-            }
+            guard !(nsError.domain == NSCocoaErrorDomain && nsError.code == NSUserCancelledError) else { return }
             errorMessage = "檔案匯入失敗：\(error.localizedDescription)"
         }
     }
 
     func openLocalDevVPN() {
         guard let url = URL(string: "localdevvpn://enable") else { return }
-        status = "已要求開啟 LocalDevVPN；等待使用者返回並驗證隧道"
+        status = "正在開啟 LocalDevVPN。切回 FlyPin 後，按「連線與準備」。"
         UIApplication.shared.open(url) { [weak self] opened in
             guard !opened else { return }
-            self?.status = "無法開啟 LocalDevVPN。請先從 App Store 安裝並手動開啟一次。"
+            self?.status = "無法開啟 LocalDevVPN。請先安裝並手動啟動一次。"
         }
     }
 
-    func startSimulation() {
-        // Intentionally fail closed until the independently implemented RSD/DVT
-        // transport is integrated and tested on a physical iOS 26 device.
-        status = "DVT 引擎尚未整合；目前不會假裝已變更系統定位"
+    func prepareDevice() {
+        guard pairingImported else {
+            errorMessage = "請先匯入這台 iPhone 的配對檔。"
+            return
+        }
+        guard !isBusy else { return }
+
+        isBusy = true
+        status = "正在建立 RSD 連線…"
+        Task {
+            defer { isBusy = false }
+            do {
+                try await bridge.connect(pairingFile: PairingFileStore.fileURL)
+                status = "RSD 已連線，正在檢查 Developer Image…"
+
+                if try await !bridge.hasMountedDeveloperImage() {
+                    try await DeveloperImageStore.ensureDownloaded { [weak self] message in
+                        Task { @MainActor in self?.status = message }
+                    }
+                    status = "檔案已驗證，正在向 iPhone 要求掛載 Developer Image…"
+                    try await bridge.mountDeveloperImage(DeveloperImageStore.paths)
+                }
+
+                isPrepared = true
+                status = "裝置已準備完成。現在可從 FlyPin 網頁選擇位置並套用。"
+            } catch {
+                isPrepared = false
+                status = "準備失敗：\(error.localizedDescription)"
+                await bridge.disconnect()
+            }
+        }
     }
 
-    func stopSimulation() {
-        // Do not claim that location was cleared without a live DVT clear response.
-        status = "目前沒有可確認的 DVT 工作階段"
+    func applySelectedCoordinate() async {
+        guard pairingImported else {
+            errorMessage = "請先匯入配對檔。"
+            return
+        }
+        guard !isBusy else { return }
+
+        isBusy = true
+        status = "正在連線並套用座標…"
+        defer { isBusy = false }
+
+        do {
+            try await bridge.connect(pairingFile: PairingFileStore.fileURL)
+            guard try await bridge.hasMountedDeveloperImage() else {
+                isPrepared = false
+                status = "Developer Image 尚未掛載。請先按「連線與準備」。"
+                return
+            }
+            try await bridge.setLocation(coordinate)
+            isPrepared = true
+            isSimulating = true
+            status = "定位模擬已套用：\(coordinate.latitude), \(coordinate.longitude)"
+        } catch {
+            isPrepared = false
+            isSimulating = false
+            status = "套用失敗：\(error.localizedDescription)"
+            await bridge.disconnect()
+        }
+    }
+
+    func clearSimulation() async {
+        guard !isBusy else { return }
+        isBusy = true
+        defer { isBusy = false }
+        do {
+            try await bridge.connect(pairingFile: PairingFileStore.fileURL)
+            try await bridge.clearLocation()
+            isSimulating = false
+            status = "已要求 iPhone 清除定位模擬。"
+        } catch {
+            status = "清除失敗：\(error.localizedDescription)"
+        }
+        await bridge.disconnect()
     }
 }
