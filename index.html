@@ -688,14 +688,21 @@
         </section>
 
         <section class="panel" id="stepsPanel">
-          <h2 class="section-title">Today's steps</h2>
-          <div class="steps-total" id="stepsTotal">—</div>
-          <div class="steps-meta" id="stepsMeta">Connect to FlyPin Companion to read your iPhone's step count.</div>
+          <h2 class="section-title">Today's FlyPin steps</h2>
+          <div class="steps-total" id="stepsTotal">0</div>
+          <div class="steps-meta" id="stepsMeta">Apple Health: not synced today · FlyPin custom: 0</div>
           <button id="syncSteps" class="btn btn-primary action-button" type="button">
-            Sync steps from iPhone
+            Read steps from Apple Health
           </button>
+          <div class="combined-input">
+            <label for="customStepsInput">Add custom steps to FlyPin</label>
+            <div class="search-wrap">
+              <input id="customStepsInput" type="number" min="1" max="1000000" step="1" inputmode="numeric" placeholder="Enter any number">
+              <button id="addCustomSteps" class="btn btn-light" type="button">Add</button>
+            </div>
+          </div>
           <p class="backup-description" style="margin:10px 0 0">
-            Source: iPhone motion sensor via FlyPin Companion. This displays device-detected steps; it does not add or edit Apple Health records.
+            Total = today's Apple Health step records + your FlyPin-only custom counter. Custom steps stay in this browser and are not written to Apple Health.
           </p>
         </section>
 
@@ -1107,68 +1114,112 @@
     }
 
     // ==========================================
-    // iPhone step-count handoff (Core Motion)
+    // Apple Health + FlyPin-only custom step counter
     // ==========================================
 
-    const STEP_STORAGE_KEY = "flypin_motion_steps";
+    const STEP_DATA_KEY = "flypin_steps_by_date";
 
-    function renderStepCount(record) {
-      const total = $("stepsTotal");
-      const meta = $("stepsMeta");
-      if (!record || !Number.isSafeInteger(record.steps) || record.steps < 0) {
-        total.textContent = "—";
-        meta.textContent = "Connect to FlyPin Companion to read your iPhone's step count.";
-        return;
-      }
-
-      const measuredAt = new Date(record.measuredAt);
-      if (Number.isNaN(measuredAt.getTime()) || measuredAt.toDateString() !== new Date().toDateString()) {
-        total.textContent = "—";
-        meta.textContent = "No step count has been synced for today yet.";
-        return;
-      }
-
-      total.textContent = record.steps.toLocaleString();
-      meta.textContent = `Read from iPhone motion sensor at ${measuredAt.toLocaleTimeString()} · FlyPin Companion`;
+    function localDateKey(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     }
 
-    function syncStepCountFromCallback() {
+    function loadStepData() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STEP_DATA_KEY) || "{}");
+        return data && typeof data === "object" ? data : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveStepData(data) {
+      localStorage.setItem(STEP_DATA_KEY, JSON.stringify(data));
+    }
+
+    function renderStepCount() {
+      const data = loadStepData();
+      const today = data[localDateKey()] || {};
+      const healthSteps = Number.isSafeInteger(today.healthSteps) && today.healthSteps >= 0 ? today.healthSteps : 0;
+      const customSteps = Number.isSafeInteger(today.customSteps) && today.customSteps >= 0 ? today.customSteps : 0;
+      $("stepsTotal").textContent = (healthSteps + customSteps).toLocaleString();
+      const healthLabel = today.healthMeasuredAt
+        ? `Apple Health: ${healthSteps.toLocaleString()}`
+        : "Apple Health: not synced";
+      $("stepsMeta").textContent = `${healthLabel} · FlyPin custom: ${customSteps.toLocaleString()}`;
+    }
+
+    function receiveHealthStepsFromCompanion() {
       const params = new URLSearchParams(window.location.search);
-      const rawSteps = params.get("steps");
-      const measuredAt = params.get("stepsDate");
+      const rawSteps = params.get("healthSteps");
+      const measuredAt = params.get("healthStepsDate");
 
       if (rawSteps !== null && measuredAt) {
         const steps = Number(rawSteps);
-        if (Number.isSafeInteger(steps) && steps >= 0) {
-          const record = { steps, measuredAt };
+        const measuredDate = new Date(measuredAt);
+        if (Number.isSafeInteger(steps) && steps >= 0 &&
+            !Number.isNaN(measuredDate.getTime()) &&
+            localDateKey(measuredDate) === localDateKey()) {
+          const data = loadStepData();
+          const today = data[localDateKey()] || {};
+          today.healthSteps = steps;
+          today.healthMeasuredAt = measuredAt;
+          data[localDateKey()] = today;
           try {
-            localStorage.setItem(STEP_STORAGE_KEY, JSON.stringify(record));
+            saveStepData(data);
+            showMessage("Apple Health steps synced to FlyPin.");
           } catch (error) {
-            console.warn("Could not save step-count snapshot.", error);
+            showMessage("Could not save Apple Health step data in this browser.");
           }
         }
-        params.delete("steps");
-        params.delete("stepsDate");
+        params.delete("healthSteps");
+        params.delete("healthStepsDate");
         const cleanURL = new URL(window.location.href);
         cleanURL.search = params.toString();
         history.replaceState({}, "", cleanURL.toString());
       }
 
-      try {
-        const saved = JSON.parse(localStorage.getItem(STEP_STORAGE_KEY) || "null");
-        renderStepCount(saved);
-      } catch (error) {
-        renderStepCount(null);
-      }
+      renderStepCount();
     }
 
     $("syncSteps").addEventListener("click", () => {
       if (!/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        showMessage("Open FlyPin in Safari on your iPhone to sync its step count.");
+        showMessage("Open FlyPin in Safari on your iPhone to read Apple Health.");
         return;
       }
-      showMessage("Opening FlyPin Companion to read today's steps…");
-      window.location.href = "flypin-companion://get-steps";
+      showMessage("Opening FlyPin Companion to request Apple Health access…");
+      window.location.href = "flypin-companion://get-health-steps";
+    });
+
+    $("addCustomSteps").addEventListener("click", () => {
+      const input = $("customStepsInput");
+      const value = Number(input.value);
+      if (!Number.isSafeInteger(value) || value < 1 || value > 1000000) {
+        showMessage("Enter a whole number from 1 to 1,000,000.");
+        return;
+      }
+
+      const data = loadStepData();
+      const todayKey = localDateKey();
+      const today = data[todayKey] || {};
+      const current = Number.isSafeInteger(today.customSteps) ? today.customSteps : 0;
+      if (current + value > Number.MAX_SAFE_INTEGER) {
+        showMessage("The custom step total is too large.");
+        return;
+      }
+
+      today.customSteps = current + value;
+      data[todayKey] = today;
+      try {
+        saveStepData(data);
+        input.value = "";
+        renderStepCount();
+        showMessage(`Added ${value.toLocaleString()} FlyPin-only steps.`);
+      } catch (error) {
+        showMessage("Could not save custom steps in this browser.");
+      }
     });
 
     // ==========================================
@@ -1635,7 +1686,7 @@
     // Initial render
     // ==========================================
 
-    syncStepCountFromCallback();
+    receiveHealthStepsFromCompanion();
 
     updateSelectedLocation(
       DEFAULT_LOCATION.lat,

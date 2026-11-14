@@ -1,27 +1,27 @@
-import CoreMotion
+import HealthKit
 import Foundation
 
 enum StepCounterError: LocalizedError {
     case unavailable
     case noData
-    case timedOut
     case invalidCallback
+    case timedOut
 
     var errorDescription: String? {
         switch self {
         case .unavailable:
-            return "此 iPhone 不支援步數計算。"
+            return "此 iPhone 無法使用 Apple 健康資料。"
         case .noData:
-            return "iPhone 沒有回傳步數資料，請確認「設定 > 隱私權與安全性 > 動作與健身」已允許 FlyPin Companion。"
-        case .timedOut:
-            return "iPhone 步數讀取逾時（15 秒）。請確認動作與健身權限後再試一次。"
+            return "Apple 健康沒有回傳今日步數。請確認已允許 FlyPin Companion 讀取「步數」資料。"
         case .invalidCallback:
             return "無法建立 FlyPin 網頁回傳連結。"
+        case .timedOut:
+            return "Apple 健康讀取逾時，請稍後再試。"
         }
     }
 }
 
-private final class StepQueryGate: @unchecked Sendable {
+private final class HealthQueryGate: @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: CheckedContinuation<Int, Error>?
 
@@ -34,42 +34,56 @@ private final class StepQueryGate: @unchecked Sendable {
         let pending = continuation
         continuation = nil
         lock.unlock()
-
         pending?.resume(with: result)
     }
 }
 
 enum StepCounterService {
-    // Keep one manager alive for the entire query. A temporary CMPedometer
-    // instance can be released before Core Motion delivers its callback.
-    private static let pedometer = CMPedometer()
+    private static let healthStore = HKHealthStore()
 
     static func queryTodaySteps() async throws -> Int {
-        guard CMPedometer.isStepCountingAvailable() else {
+        guard HKHealthStore.isHealthDataAvailable(),
+              let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
             throw StepCounterError.unavailable
         }
 
-        let startOfDay = Calendar.current.startOfDay(for: Date())
-        let end = Date()
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            healthStore.requestAuthorization(toShare: [], read: [stepType]) { success, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if success {
+                    continuation.resume(returning: ())
+                } else {
+                    continuation.resume(throwing: StepCounterError.noData)
+                }
+            }
+        }
+
+        let start = Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
 
         return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Int, Error>) in
-            let gate = StepQueryGate(continuation)
-
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 15) {
+            let gate = HealthQueryGate(continuation)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 20) {
                 gate.finish(.failure(StepCounterError.timedOut))
             }
 
-            pedometer.queryPedometerData(from: startOfDay, to: end) { data, error in
+            let query = HKStatisticsQuery(
+                quantityType: stepType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, statistics, error in
                 if let error {
                     gate.finish(.failure(error))
                     return
                 }
-                guard let data else {
+                guard let quantity = statistics?.sumQuantity() else {
                     gate.finish(.failure(StepCounterError.noData))
                     return
                 }
-                gate.finish(.success(data.numberOfSteps.intValue))
+                gate.finish(.success(Int(quantity.doubleValue(for: .count()).rounded())))
             }
+            healthStore.execute(query)
         }
     }
 }
