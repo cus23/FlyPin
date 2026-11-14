@@ -241,6 +241,22 @@
       line-height: 1.6;
     }
 
+    .location-controls {
+      margin-bottom: 12px;
+    }
+
+    .location-controls .btn {
+      width: 100%;
+    }
+
+    .location-controls .small-note {
+      margin-bottom: 0;
+    }
+
+    .location-controls .status {
+      margin-top: 10px;
+    }
+
     .coordinate-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -577,6 +593,20 @@
 
     <section class="panel">
       <h2 class="section-title">Choose your location</h2>
+      <div class="location-controls">
+        <button
+          class="btn btn-secondary"
+          id="currentLocationBtn"
+          type="button"
+          aria-describedby="currentLocationNote"
+        >
+          Show My Current Location
+        </button>
+        <p class="small-note" id="currentLocationNote">
+          This previews your real device location in FlyPin only. It does not change your iPhone's system location or save to Recent Places unless you tap "Save Selection." Map tile requests may reveal the area shown to OpenStreetMap.
+        </p>
+        <div class="status" id="currentLocationStatus" role="status" aria-live="polite"></div>
+      </div>
       <div id="map" aria-label="Interactive location map"></div>
       <p class="map-note">
         Tap anywhere on the map or drag the pin to select a location.
@@ -860,6 +890,69 @@
       setStatus("Coordinates applied.");
       return true;
     }
+
+    const currentLocationButton = document.getElementById("currentLocationBtn");
+    const currentLocationStatus = document.getElementById("currentLocationStatus");
+
+    function setCurrentLocationStatus(message) {
+      currentLocationStatus.textContent = message;
+      setStatus(message);
+    }
+
+    currentLocationButton.addEventListener("click", function () {
+      if (!navigator.geolocation) {
+        setCurrentLocationStatus(
+          "Current location is not available in this browser. You can still choose a place on the map."
+        );
+        return;
+      }
+
+      currentLocationButton.disabled = true;
+      currentLocationButton.textContent = "Finding location...";
+      currentLocationButton.setAttribute("aria-busy", "true");
+      setCurrentLocationStatus("Requesting your current location...");
+
+      function finishLocationRequest(message) {
+        currentLocationButton.disabled = false;
+        currentLocationButton.textContent = "Show My Current Location";
+        currentLocationButton.removeAttribute("aria-busy");
+        setCurrentLocationStatus(message);
+      }
+
+      try {
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            const lat = Number(position.coords.latitude);
+            const lng = Number(position.coords.longitude);
+
+            if (!validCoordinates(lat, lng)) {
+              finishLocationRequest("The browser returned an invalid location. Please try again.");
+              return;
+            }
+
+            updateCoordinates(lat, lng);
+            map.setView([lat, lng], 16);
+            finishLocationRequest(
+              "Your real location is shown in FlyPin only. Tap Save Selection to add it to Recent Places."
+            );
+          },
+          function (error) {
+            const messages = {
+              1: "Location access was denied. Allow location for this site in your browser settings, then try again.",
+              2: "Your location is unavailable. Check Location Services and try again.",
+              3: "The location request timed out. Please try again."
+            };
+
+            finishLocationRequest(
+              messages[error.code] || "Unable to get your current location. Please try again."
+            );
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      } catch (error) {
+        finishLocationRequest("Your browser could not start a location request. Please try again.");
+      }
+    });
 
     updateCoordinates(initialLat, initialLng);
 
