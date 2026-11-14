@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
-  <meta charset="UTF-8">
+<!-- saved from url=(0031)https://cus23.github.io/FlyPin/ -->
+<html lang="zh-Hant"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="./FlyPin_files/css2" rel="stylesheet">
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f7f3eb">
   <meta name="description" content="FlyPin - Select and save your favorite places.">
@@ -13,16 +12,13 @@
   <title>FlyPin</title>
 
   <!-- Website icons -->
-  <link rel="icon" type="image/png" href="./icon.png">
-  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="icon" type="image/png" href="./FlyPin_files/icon.png">
+  <link rel="apple-touch-icon" href="./FlyPin_files/icon.png">
 
   <!-- Basic web app manifest -->
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22FlyPin%22%2C%22short_name%22%3A%22FlyPin%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f7f3eb%22%2C%22theme_color%22%3A%22%23f7f3eb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/png%22%7D%5D%7D">
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  >
+  <link rel="stylesheet" href="./FlyPin_files/leaflet.css">
 
   <style>
     :root {
@@ -542,19 +538,14 @@
   <main class="app">
     <header>
       <div class="brand">
-        <img src="./icon.png" alt="FlyPin icon">
+        <img src="./FlyPin_files/icon.png" alt="FlyPin icon">
         <div>
           <h1>FlyPin</h1>
           <p>Choose a place. Save your spot.</p>
         </div>
       </div>
 
-      <button
-        class="places-button"
-        id="openDrawer"
-        type="button"
-        aria-label="Open My Places"
-      >
+      <button class="places-button" id="openDrawer" type="button" aria-label="Open My Places">
         ♡ My Places
       </button>
     </header>
@@ -563,12 +554,7 @@
       <h2 class="section-title">Find a place</h2>
 
       <div class="search-row">
-        <input
-          id="searchInput"
-          type="text"
-          placeholder="Search a landmark or address..."
-          autocomplete="off"
-        >
+        <input id="searchInput" type="text" placeholder="Search a landmark or address..." autocomplete="off">
         <button class="btn" id="searchBtn" type="button">Search</button>
       </div>
 
@@ -577,7 +563,7 @@
 
     <section class="panel">
       <h2 class="section-title">Choose your location</h2>
-      <div id="map" aria-label="Interactive location map"></div>
+      <div id="map" aria-label="Interactive location map" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(0px, 0px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 18; transform: translate3d(33px, -1px, 0px) scale(2);"></div><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 19; transform: translate3d(-461px, -33px, 0px) scale(1);"><img alt="" src="./FlyPin_files/3507.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, 318px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-overlay-pane"></div><div class="leaflet-pane leaflet-shadow-pane"><img src="./FlyPin_files/marker-shadow.png" class="leaflet-marker-shadow leaflet-zoom-animated" alt="" style="margin-left: -12px; margin-top: -41px; width: 41px; height: 41px; transform: translate3d(509px, 111px, 0px);"></div><div class="leaflet-pane leaflet-marker-pane"><img src="./FlyPin_files/marker-icon-2x.png" class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive leaflet-marker-draggable" alt="Marker" tabindex="0" role="button" style="margin-left: -12px; margin-top: -41px; width: 25px; height: 41px; transform: translate3d(509px, 111px, 0px); z-index: 111;"></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(1.75669e+06px, 897958px, 0px) scale(4096);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="https://cus23.github.io/FlyPin/#" title="Zoom in" role="button" aria-label="Zoom in" aria-disabled="false"><span aria-hidden="true">+</span></a><a class="leaflet-control-zoom-out" href="https://cus23.github.io/FlyPin/#" title="Zoom out" role="button" aria-label="Zoom out" aria-disabled="false"><span aria-hidden="true">−</span></a></div></div><div class="leaflet-top leaflet-right"></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-attribution leaflet-control"><a href="https://leafletjs.com/" title="A JavaScript library for interactive maps"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" class="leaflet-attribution-flag"><path fill="#4C7BE1" d="M0 0h12v4H0z"></path><path fill="#FFD500" d="M0 4h12v3H0z"></path><path fill="#E0BC00" d="M0 7h12v1H0z"></path></svg> Leaflet</a> <span aria-hidden="true">|</span> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</div></div></div></div>
       <p class="map-note">
         Tap anywhere on the map or drag the pin to select a location.
       </p>
@@ -589,32 +575,18 @@
       <div class="coordinate-grid">
         <div class="field">
           <label for="latitude">Latitude</label>
-          <input
-            id="latitude"
-            type="number"
-            step="any"
-            placeholder="25.0330"
-          >
+          <input id="latitude" type="number" step="any" placeholder="25.0330">
         </div>
 
         <div class="field">
           <label for="longitude">Longitude</label>
-          <input
-            id="longitude"
-            type="number"
-            step="any"
-            placeholder="121.5654"
-          >
+          <input id="longitude" type="number" step="any" placeholder="121.5654">
         </div>
       </div>
 
       <div class="field combined-field">
         <label for="combinedCoords">Or enter coordinates together</label>
-        <input
-          id="combinedCoords"
-          type="text"
-          placeholder="25.0330, 121.5654"
-        >
+        <input id="combinedCoords" type="text" placeholder="25.0330, 121.5654">
       </div>
       
       <div class="action-row">
@@ -629,21 +601,12 @@
         </div>
       
         <button class="btn" id="confirmBtn" type="button">
-          Save Selection
+          Confirm Fly
         </button>
       </div>
 
-      <p class="small-note" id="locationScopeNote">
-        This saves the selected coordinates in FlyPin's recent places only. It does not change your iPhone's system location or the location other apps receive.
-      </p>
-
       <div class="favorite-save-row">
-        <input
-          id="favoriteName"
-          type="text"
-          maxlength="50"
-          placeholder="Name this favorite place..."
-        >
+        <input id="favoriteName" type="text" maxlength="50" placeholder="Name this favorite place...">
         <button class="btn btn-secondary" id="saveFavoriteBtn" type="button">
           ♡ Save
         </button>
@@ -662,20 +625,10 @@
   <div class="drawer-overlay" id="drawerOverlay"></div>
 
   <!-- My Places drawer -->
-  <aside
-    class="drawer"
-    id="drawer"
-    aria-label="My Places"
-    aria-hidden="true"
-  >
+  <aside class="drawer" id="drawer" aria-label="My Places" aria-hidden="true">
     <div class="drawer-header">
       <h2>My Places</h2>
-      <button
-        class="close-drawer"
-        id="closeDrawer"
-        type="button"
-        aria-label="Close My Places"
-      >×</button>
+      <button class="close-drawer" id="closeDrawer" type="button" aria-label="Close My Places">×</button>
     </div>
 
     <section class="drawer-section">
@@ -683,25 +636,19 @@
         <h3>♡ Favorites</h3>
         <span class="count" id="favoriteCount">0 places</span>
       </div>
-      <div class="place-list" id="favoriteList"></div>
+      <div class="place-list" id="favoriteList"><div class="empty-state">No favorites saved yet.</div></div>
     </section>
 
     <section class="drawer-section">
       <div class="drawer-section-heading">
         <h3>Recently Used</h3>
-        <button
-          class="place-action"
-          id="clearRecentBtn"
-          type="button"
-          aria-label="Clear recent places"
-          title="Clear recent places"
-        >Clear</button>
+        <button class="place-action" id="clearRecentBtn" type="button" aria-label="Clear recent places" title="Clear recent places">Clear</button>
       </div>
-      <div class="place-list" id="recentList"></div>
+      <div class="place-list" id="recentList"><div class="empty-state">No recent places yet.</div></div>
     </section>
 
     <section class="backup-area">
-      <h3>Backup & Restore</h3>
+      <h3>Backup &amp; Restore</h3>
       <p>
         Export your favorites as a JSON file, or import a previous backup.
         Keep the downloaded file somewhere safe.
@@ -716,24 +663,14 @@
           ↑ Import favorites JSON
         </button>
 
-        <input
-          class="import-input"
-          id="importFile"
-          type="file"
-          accept=".json,application/json"
-        >
+        <input class="import-input" id="importFile" type="file" accept=".json,application/json">
       </div>
 
-      <div
-        class="backup-status"
-        id="backupStatus"
-        role="status"
-        aria-live="polite"
-      ></div>
+      <div class="backup-status" id="backupStatus" role="status" aria-live="polite"></div>
     </section>
   </aside>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./FlyPin_files/leaflet.js.下載"></script>
 
   <script>
     // --------------------------------
@@ -1161,7 +1098,7 @@
         }
       });
 
-    // Save selection in FlyPin recent places
+    // Confirm Fly
     document
       .getElementById("confirmBtn")
       .addEventListener("click", function () {
@@ -1181,7 +1118,7 @@
         if (savePlaces(RECENT_KEY, recentPlaces)) {
           renderSavedPlaces();
           setStatus(
-            "Saved in FlyPin recent places only; iPhone system location is unchanged: " +
+            "Location confirmed in FlyPin: " +
             formatCoordinate(currentLat) + ", " +
             formatCoordinate(currentLng)
           );
@@ -1366,5 +1303,6 @@
     // Initial render
     renderSavedPlaces();
   </script>
-</body>
-</html>
+
+
+</body></html>
