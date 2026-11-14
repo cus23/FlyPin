@@ -19,7 +19,7 @@ Native companion for the existing FlyPin map website. The website selects coordi
 1. On Windows, install iTunes (the USB device support required by the pairing utility) and download the [idevice_pair 1.1.0 Windows build](https://github.com/jkcoxson/idevice_pair/releases/download/v1.1.0/idevice_pair--windows-x86_64.exe).
 2. Connect the iPhone by USB, unlock it, and tap **Trust** if prompted. In idevice_pair, select the iPhone, choose **Remote pairing**, create an RPPairing record, and save it to a file. Do not choose a Lockdown-only record.
 3. Transfer the pairing file to the iPhone using iCloud Drive or another private file-transfer method.
-4. Install FlyPin Companion and LocalDevVPN on the iPhone. Import the RPPairing file in Companion.
+4. Install FlyPin Companion and [LocalDevVPN from the App Store](https://apps.apple.com/app/id6755608044) on the iPhone. Import the RPPairing file in Companion.
 5. Open LocalDevVPN, enable its tunnel, then return to Companion.
 6. Tap **Connect & Prepare** once. Companion creates the RSD tunnel, downloads and verifies the pinned Cryptex DDI assets, then asks Apple's TSS service to personalize/install the DDI.
 7. Open FlyPin on the iPhone in Safari and use **Send location to iPhone**. If using the Windows browser, scan the generated QR code with the iPhone camera and tap the handoff page's button.
