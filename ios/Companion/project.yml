@@ -19,12 +19,14 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+      - path: Assets.xcassets
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: tw.flypin.companion
         PRODUCT_NAME: FlyPinCompanion
         INFOPLIST_FILE: Info.plist
         CODE_SIGN_ENTITLEMENTS: FlyPinCompanion.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SUPPORTS_MACCATALYST: NO
         SWIFT_STRICT_CONCURRENCY: minimal
         CLANG_ENABLE_MODULES: YES

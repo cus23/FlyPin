@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - feat/ios-companion-mvp
     paths:
+      - "appicon.png"
       - "ios/Companion/Sources/**"
+      - "ios/Companion/Assets.xcassets/**"
       - "ios/Companion/project.yml"
       - "ios/Companion/Info.plist"
       - "ios/Companion/FlyPinCompanion.entitlements"
@@ -36,6 +39,37 @@ jobs:
 
       - name: Install XcodeGen
         run: brew install xcodegen
+
+      - name: Prepare iOS App Icon from repository root
+        run: |
+          set -euo pipefail
+          SOURCE="$GITHUB_WORKSPACE/appicon.png"
+          ICON_DIR="$GITHUB_WORKSPACE/ios/Companion/Assets.xcassets/AppIcon.appiconset"
+          test -s "$SOURCE"
+          mkdir -p "$ICON_DIR"
+          WIDTH="$(sips -g pixelWidth "$SOURCE" | awk '/pixelWidth/ {print $2}')"
+          HEIGHT="$(sips -g pixelHeight "$SOURCE" | awk '/pixelHeight/ {print $2}')"
+          if [[ "$WIDTH" != "1024" || "$HEIGHT" != "1024" ]]; then
+            echo "appicon.png must be exactly 1024x1024 pixels; found ${WIDTH}x${HEIGHT}." >&2
+            exit 1
+          fi
+          cp "$SOURCE" "$ICON_DIR/AppIcon.png"
+          cat > "$ICON_DIR/Contents.json" <<'JSON'
+          {
+            "images" : [
+              {
+                "filename" : "AppIcon.png",
+                "idiom" : "universal",
+                "platform" : "ios",
+                "size" : "1024x1024"
+              }
+            ],
+            "info" : {
+              "author" : "xcode",
+              "version" : 1
+            }
+          }
+          JSON
 
       - name: Fetch and verify pinned idevice FFI
         working-directory: ios/Companion
