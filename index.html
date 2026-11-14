@@ -660,9 +660,6 @@
             Save to Favorites
           </button>
 
-          <button id="confirmFly" class="btn btn-primary action-button" type="button">
-            Confirm Fly
-          </button>
           <button id="sendToIPhone" class="btn btn-primary action-button" type="button">
             Send location to iPhone
           </button>
@@ -1053,10 +1050,10 @@
     });
 
     // ==========================================
-    // Confirm Fly
+    // Recent locations
     // ==========================================
 
-    $("confirmFly").addEventListener("click", () => {
+    function recordRecentLocation() {
       const place = normalizePlace({
         ...selectedLocation,
         name: selectedLocation.name || "Selected location"
@@ -1073,14 +1070,13 @@
       ].slice(0, MAX_RECENT);
 
       if (!savePlaces(STORAGE_KEYS.recent, nextRecent)) {
-        return;
+        return false;
       }
 
       recentLocations = nextRecent;
       renderRecent();
-
-      showMessage("Location saved in FlyPin.");
-    });
+      return true;
+    }
 
     // ==========================================
     // iPhone Companion handoff
@@ -1102,6 +1098,7 @@
     }
 
     $("sendToIPhone").addEventListener("click", () => {
+      recordRecentLocation();
       const companionURL = buildCompanionURL();
       const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
