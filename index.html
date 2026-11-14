@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +8,9 @@
   <meta name="description" content="FlyPin — Choose, save, and manage locations on a map.">
 
   <title>FlyPin — Choose Your Location</title>
+
+  <link rel="icon" type="image/png" href="./icon.png">
+  <link rel="apple-touch-icon" href="./icon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,16 +106,19 @@
 
     main {
       width: 100%;
-      max-width: 1500px;
+      max-width: 1700px;
       margin: 0 auto;
       padding: 30px 34px;
       flex: 1;
       display: grid;
-      grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
       gap: 26px;
+      align-items: stretch;
     }
 
     .sidebar {
+      grid-column: 2;
+      grid-row: 1;
       display: flex;
       flex-direction: column;
       gap: 18px;
@@ -122,16 +129,8 @@
       padding: 4px 2px 8px;
     }
 
-    .eyebrow {
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
     h1 {
-      margin: 8px 0;
+      margin: 0 0 10px;
       font-family: "DM Serif Display", serif;
       font-size: 36px;
       font-weight: 400;
@@ -448,6 +447,8 @@
 
     .map-panel {
       position: relative;
+      grid-column: 1;
+      grid-row: 1;
       min-height: 650px;
       overflow: hidden;
       border: 1px solid var(--line);
@@ -533,10 +534,14 @@
 
       .sidebar {
         order: 2;
+        grid-column: auto;
+        grid-row: auto;
       }
 
       .map-panel {
         order: 1;
+        grid-column: auto;
+        grid-row: auto;
         min-height: 440px;
       }
 
@@ -605,8 +610,7 @@
       <aside class="sidebar">
 
         <section class="intro">
-          <div class="eyebrow">Explore · Select · Save</div>
-          <h1>Choose your<br>destination.</h1>
+          <h1>Choose your destination.</h1>
           <p>Search for a place or select any point on the map. Save your favorite locations for later.</p>
         </section>
 
@@ -671,6 +675,10 @@
             </div>
             <div class="selected-hint">Click the map or drag the pin to change.</div>
           </div>
+
+          <button id="saveFavorite" class="btn btn-soft confirm-btn" type="button">
+            Save to Favorites
+          </button>
 
           <button id="confirmFly" class="btn btn-primary confirm-btn" type="button">
             Confirm Fly
@@ -1201,6 +1209,8 @@
       showMessage("Added to favorites.");
     }
 
+    $("saveFavorite").addEventListener("click", addFavorite);
+
     function removeFavorite(index) {
       const nextFavorites = favorites.filter((_, i) => i !== index);
 
@@ -1472,6 +1482,11 @@
 
     renderFavorites();
     renderRecent();
+
+    // Refresh Leaflet map size after layout is established.
+    window.addEventListener("load", () => {
+      setTimeout(() => map.invalidateSize(), 100);
+    });
 
   </script>
 </body>
