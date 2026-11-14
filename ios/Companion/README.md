@@ -16,8 +16,8 @@ Native companion for the existing FlyPin map website. The website selects coordi
 
 ## Intended use flow
 
-1. On Windows, install iTunes (the USB device support required by the pairing utility) and download the [idevice_pair 1.1.0 Windows build](https://github.com/jkcoxson/idevice_pair/releases/download/v1.1.0/idevice_pair--windows-x86_64.exe).
-2. Connect the iPhone by USB, unlock it, and tap **Trust** if prompted. In idevice_pair, select the iPhone, choose **Remote pairing**, create an RPPairing record, and save it to a file. Do not choose a Lockdown-only record.
+1. On Windows, install iTunes (the USB device support required by the pairing utility). For iOS 26, use the [idevice_pair 0.1.14 Windows build](https://github.com/jkcoxson/idevice_pair/releases/download/0.1.14/idevice_pair--windows-x86_64.exe) as the compatibility fallback. Its release predates the v1.0 rewrite and includes the RPPairing workflow. The newer [v1.1.0 build](https://github.com/jkcoxson/idevice_pair/releases/download/v1.1.0/idevice_pair--windows-x86_64.exe) also documents USB RPPairing for iOS 17.4+, but use 0.1.14 if v1.1.0 fails on your Windows/iPhone setup.
+2. Connect the iPhone by USB, unlock it, and tap **Trust** if prompted. In idevice_pair 0.1.14, select the iPhone and click **Generate** to create the RPPairing record (the 0.1.14 GUI labels the RPPairing path as Generate). Save/export that generated record to a file. Do not use a Lockdown-only record.
 3. Transfer the pairing file to the iPhone using iCloud Drive or another private file-transfer method.
 4. Install FlyPin Companion and [LocalDevVPN from the App Store](https://apps.apple.com/app/id6755608044) on the iPhone. Import the RPPairing file in Companion.
 5. Open LocalDevVPN, enable its tunnel, then return to Companion.
