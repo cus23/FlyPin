@@ -2,8 +2,7 @@ import Darwin
 import Foundation
 import IDevice
 
-/// Owns the RSD tunnel and DVT location-simulation handles.
-/// All FFI calls are serialized because the underlying C handles are stateful.
+/// Owns the RSD tunnel and Cryptex/DVT handles. All FFI operations are serialized.
 final class DeveloperServiceBridge: @unchecked Sendable {
     private let queue = DispatchQueue(label: "tw.flypin.developer-service", qos: .userInitiated)
     private var adapter: OpaquePointer?
@@ -22,35 +21,21 @@ final class DeveloperServiceBridge: @unchecked Sendable {
             var endpoint = sockaddr_in()
             endpoint.sin_family = sa_family_t(AF_INET)
             endpoint.sin_port = in_port_t(self.tunnelPort).bigEndian
-
-            let parsed = self.tunnelAddress.withCString {
-                inet_pton(AF_INET, $0, &endpoint.sin_addr)
-            }
-            guard parsed == 1 else {
-                throw DeveloperServiceError.message("LocalDevVPN endpoint is invalid.")
-            }
+            let parsed = self.tunnelAddress.withCString { inet_pton(AF_INET, $0, &endpoint.sin_addr) }
+            guard parsed == 1 else { throw DeveloperServiceError.message("LocalDevVPN endpoint is invalid.") }
 
             var pairing: OpaquePointer?
-            try self.check(pairingFile.path.withCString {
-                rp_pairing_file_read($0, &pairing)
-            }, "Cannot read the pairing record. Import the pairing file again.")
-            guard let pairing else {
-                throw DeveloperServiceError.message("The pairing record is not valid.")
-            }
+            try self.check(pairingFile.path.withCString { rp_pairing_file_read($0, &pairing) },
+                           "Cannot read the pairing record. Import it again.")
+            guard let pairing else { throw DeveloperServiceError.message("The pairing record is invalid.") }
             defer { rp_pairing_file_free(pairing) }
 
             let failure = "FlyPin".withCString { label in
                 withUnsafePointer(to: &endpoint) { pointer in
                     pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) {
                         tunnel_create_rppairing(
-                            $0,
-                            socklen_t(MemoryLayout<sockaddr_in>.stride),
-                            label,
-                            pairing,
-                            nil,
-                            nil,
-                            &self.adapter,
-                            &self.handshake
+                            $0, socklen_t(MemoryLayout<sockaddr_in>.stride), label, pairing,
+                            nil, nil, &self.adapter, &self.handshake
                         )
                     }
                 }
@@ -70,75 +55,36 @@ final class DeveloperServiceBridge: @unchecked Sendable {
     func hasMountedDeveloperImage() async throws -> Bool {
         try await run {
             try self.requireTunnel()
-            var service: OpaquePointer?
-            try self.check(image_mounter_connect_rsd(self.adapter, self.handshake, &service),
-                           "Cannot connect to the Developer Image service.")
-            guard let service else { throw DeveloperServiceError.message("Developer Image service unavailable.") }
-            defer { image_mounter_free(service) }
-
-            var entries: UnsafeMutablePointer<plist_t?>?
-            var count = 0
-            try self.check(image_mounter_copy_devices(service, &entries, &count),
-                           "Cannot query mounted Developer Images.")
-            if let entries { idevice_plist_array_free(entries, UInt(count)) }
-            return count > 0
+            var installed: UnsafeMutablePointer<InstalledCryptexC>?
+            try self.check(cryptexd_installed_ddi(self.adapter, self.handshake, &installed),
+                           "Cannot query the installed Developer Image cryptex.")
+            guard let installed else { return false }
+            cryptexd_free_installed_cryptex(installed)
+            return true
         }
     }
 
-    func mountDeveloperImage(_ paths: DeveloperImagePaths) async throws {
+    func installDeveloperImage(from directory: URL) async throws {
         try await run {
             try self.requireTunnel()
-            if try self.mountedImageCount() > 0 { return }
+            if try self.isCryptexInstalled() { return }
 
-            let image = try Data(contentsOf: paths.image, options: .mappedIfSafe)
-            let trust = try Data(contentsOf: paths.trustCache, options: .mappedIfSafe)
-            let manifest = try Data(contentsOf: paths.buildManifest, options: .mappedIfSafe)
-            guard !image.isEmpty, !trust.isEmpty, !manifest.isEmpty else {
-                throw DeveloperServiceError.message("One or more Developer Image files are empty.")
+            var assets: OpaquePointer?
+            try self.check(directory.path.withCString { cryptex1_assets_load($0, &assets) },
+                           "The verified Cryptex Developer Image files could not be loaded.")
+            guard let assets else {
+                throw DeveloperServiceError.message("The Cryptex asset loader returned no handle.")
             }
+            defer { cryptex1_assets_free(assets) }
 
-            var lockdown: OpaquePointer?
-            try self.check(lockdownd_connect_rsd(self.adapter, self.handshake, &lockdown),
-                           "Cannot connect to lockdownd.")
-            guard let lockdown else { throw DeveloperServiceError.message("lockdownd did not respond.") }
-            defer { lockdownd_client_free(lockdown) }
+            var installed: UnsafeMutablePointer<InstalledCryptexC>?
+            try self.check(cryptexd_install_ddi(self.adapter, self.handshake, assets, &installed),
+                           "Apple could not personalize and install the Developer Image. Check internet access, Developer Mode, and iOS compatibility.")
+            if let installed { cryptexd_free_installed_cryptex(installed) }
 
-            var chipNode: plist_t?
-            try self.check(lockdownd_get_value(lockdown, "UniqueChipID", nil, &chipNode),
-                           "Cannot read the device chip identifier.")
-            guard let chipNode else { throw DeveloperServiceError.message("Device chip identifier is missing.") }
-            defer { plist_free(chipNode) }
-
-            var chipID: UInt64 = 0
-            plist_get_uint_val(chipNode, &chipID)
-            guard chipID != 0 else { throw DeveloperServiceError.message("Device chip identifier is invalid.") }
-
-            var mounter: OpaquePointer?
-            try self.check(image_mounter_connect_rsd(self.adapter, self.handshake, &mounter),
-                           "Cannot open the image mounter.")
-            guard let mounter else { throw DeveloperServiceError.message("Image mounter is unavailable.") }
-            defer { image_mounter_free(mounter) }
-
-            let failure: UnsafeMutablePointer<IdeviceFfiError>? = image.withUnsafeBytes { imageBytes in
-                trust.withUnsafeBytes { trustBytes in
-                    manifest.withUnsafeBytes { manifestBytes in
-                        image_mounter_mount_personalized_rsd(
-                            mounter,
-                            self.adapter,
-                            self.handshake,
-                            imageBytes.bindMemory(to: UInt8.self).baseAddress,
-                            image.count,
-                            trustBytes.bindMemory(to: UInt8.self).baseAddress,
-                            trust.count,
-                            manifestBytes.bindMemory(to: UInt8.self).baseAddress,
-                            manifest.count,
-                            nil,
-                            chipID
-                        )
-                    }
-                }
+            guard try self.isCryptexInstalled() else {
+                throw DeveloperServiceError.message("The install request returned, but iOS did not report an installed Developer Image.")
             }
-            try self.check(failure, "Apple could not personalize or mount this Developer Image. It may not match this iOS build or device.")
         }
     }
 
@@ -199,26 +145,19 @@ final class DeveloperServiceBridge: @unchecked Sendable {
         }
     }
 
-    private func mountedImageCount() throws -> Int {
-        var service: OpaquePointer?
-        try check(image_mounter_connect_rsd(adapter, handshake, &service),
-                  "Cannot connect to the Developer Image service.")
-        guard let service else { throw DeveloperServiceError.message("Developer Image service unavailable.") }
-        defer { image_mounter_free(service) }
-
-        var devices: UnsafeMutablePointer<plist_t?>?
-        var count = 0
-        try check(image_mounter_copy_devices(service, &devices, &count),
-                  "Cannot query mounted Developer Images.")
-        if let devices { idevice_plist_array_free(devices, UInt(count)) }
-        return count
+    private func isCryptexInstalled() throws -> Bool {
+        var installed: UnsafeMutablePointer<InstalledCryptexC>?
+        try check(cryptexd_installed_ddi(adapter, handshake, &installed),
+                  "Cannot query the installed Developer Image cryptex.")
+        guard let installed else { return false }
+        cryptexd_free_installed_cryptex(installed)
+        return true
     }
 
     private func ensureLocationClient() throws {
         if locationClient != nil { return }
         try requireTunnel()
         releaseLocationSession()
-
         do {
             try check(remote_server_connect_rsd(adapter, handshake, &remoteServer),
                       "Cannot connect to the DVT remote server.")
@@ -226,7 +165,7 @@ final class DeveloperServiceBridge: @unchecked Sendable {
                 throw DeveloperServiceError.message("DVT remote server did not return a client.")
             }
             try check(location_simulation_new(remoteServer, &locationClient),
-                      "DVT location simulation is unavailable. Mount the matching Developer Image first.")
+                      "DVT location simulation is unavailable. Install the Cryptex Developer Image first.")
             guard locationClient != nil else {
                 throw DeveloperServiceError.message("DVT location simulation did not return a client.")
             }

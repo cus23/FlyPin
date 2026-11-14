@@ -1,51 +1,49 @@
 # FlyPin Companion (iOS)
 
-This is the native companion for the existing FlyPin GitHub Pages website. The website remains the map and coordinate-selection interface; this app handles iPhone-side pairing and developer-service communication.
+Native companion for the existing FlyPin map website. The website selects coordinates; this app connects to the iPhone's developer services and applies them through DVT location simulation.
 
-## Current scope
+## Implemented in this branch
 
-- SwiftUI iOS app skeleton (Xcode 26 project generated with XcodeGen)
-- URL handoff: `flypin-companion://set-location?lat=25.033&lon=121.565`
-- Coordinate range validation
-- Local pairing-file import with iOS file protection, POSIX mode 0600, and backup exclusion
-- Explicit LocalDevVPN app handoff
-- Pinned, SHA-256-verified `idevice` FFI dependency fetched only during the macOS build
-- RSD developer-tunnel connection implementation (requires an imported pairing record and a working LocalDevVPN tunnel)
-- Unsigned app package published to a persistent GitHub pre-release
+- SwiftUI iOS companion and `flypin-companion://set-location?lat=25.033&lon=121.565` handoff
+- Secure local pairing-file import
+- LocalDevVPN handoff and RSD tunnel setup
+- Pinned `idevice` FFI dependency with Git object verification
+- Pinned Cryptex Developer Disk Image assets with Git object verification
+- Cryptex DDI installation through `cryptexd` (Apple personalization/TSS required)
+- DVT location simulation set and clear calls
+- Website-to-iPhone handoff, including a QR path for Windows desktop browsers
+- Persistent GitHub pre-release for the latest unsigned app
 
-## Not implemented yet
+## Intended use flow
 
-**This build does not yet change the iPhone's system location.** Developer Disk Image acquisition, device-build matching, image signature/integrity validation, personalized image mounting, and end-to-end physical-device testing are still required before enabling location simulation. Start and Stop remain disabled until those steps are implemented and verified.
+1. On the iPhone, install FlyPin Companion and LocalDevVPN.
+2. Import the iPhone's RPPairing record into Companion.
+3. Open LocalDevVPN, enable its tunnel, then return to Companion.
+4. Tap **Connect & Prepare** once. Companion creates the RSD tunnel, downloads and verifies the pinned Cryptex DDI assets, then asks Apple to personalize/install the DDI.
+5. Open FlyPin on the iPhone in Safari and use **Send location to iPhone**. For a Windows browser, scan the generated QR code with the iPhone camera and tap the handoff page's button.
+6. Companion receives the coordinate and applies it through DVT. Use Stop to clear the simulation.
 
-## Windows + iPhone workflow
+## Windows + iPhone build workflow
 
-You do not need a Mac on your Windows PC. GitHub Actions uses a hosted macOS runner with Xcode 26 to build the app. The latest unsigned build is published to:
+No Mac is required on the Windows PC. GitHub Actions uses a hosted macOS runner and Xcode to build the unsigned app. The latest package is published at:
 
 https://github.com/cus23/FlyPin/releases/tag/companion-latest
 
-The release contains `FlyPinCompanion-unsigned.zip` and `SHA256SUMS.txt`. The release is retained until it is manually deleted; it is separate from the seven-day Actions artifact.
+The Release contains an unsigned `.app` archive and SHA256 checksum. It is retained until manually deleted, unlike the seven-day Actions artifact.
 
-**Important:** the ZIP contains an unsigned `.app`, not an installable IPA. Installing it on an iPhone requires code signing and a provisioning profile. A Windows PC can download and keep the release, but cannot replace Apple's signing/provisioning requirements.
+**Installation still requires signing and provisioning.** The unsigned archive is not an installable IPA. The project does not claim that a Windows PC can bypass Apple's code-signing requirements.
 
-## Build locally
+## Compatibility and limits
 
-Requires macOS with Xcode 26 and XcodeGen:
+- Requires iOS Developer Mode and an existing RPPairing record for the same iPhone.
+- Cryptex DDI installation requires network access to Apple's personalization service (TSS).
+- LocalDevVPN's app-open callback does not prove that its tunnel is active; the RSD connection itself is the readiness check.
+- DVT simulation may be detected or ignored by apps that reject software location simulation or use independent location signals.
+- iOS may suspend the companion app. Reopen it if the developer connection drops.
+- A successful CI build is not proof of physical-device compatibility. Real iOS 26 hardware testing remains necessary.
 
-```sh
-./scripts/fetch-idevice.sh
-brew install xcodegen
-xcodegen generate
-xcodebuild -project FlyPinCompanion.xcodeproj -scheme FlyPinCompanion \
-  -sdk iphoneos -configuration Debug \
-  -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
-```
+## Security
 
-## Security rules
-
-- Never commit a pairing file, UDID, Apple ID credential, signing certificate, or provisioning profile.
-- Never put pairing contents in URLs, logs, analytics, issues, or build artifacts.
-- Treat Developer Support files as supply-chain inputs: pin the source revision and verify published hashes before mounting.
-- Do not report a location as active unless the DVT service confirms the operation.
-- iOS Developer Mode is required for the intended developer-service path.
-- LocalDevVPN's app-open callback is not proof that its tunnel is connected.
-- iOS may suspend the companion app; persistent background operation is not guaranteed.
+- Pairing data stays in the iOS app's protected local storage and is never put in URLs, logs, GitHub artifacts, or source control.
+- Developer Image downloads are pinned to immutable source revisions and verified before use.
+- Never report a coordinate as active unless the DVT call returns successfully.

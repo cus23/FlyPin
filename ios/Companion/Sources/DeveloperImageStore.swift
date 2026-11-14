@@ -2,34 +2,29 @@ import CommonCrypto
 import Foundation
 
 struct DeveloperImagePaths: Sendable {
-    let image: URL
-    let trustCache: URL
-    let buildManifest: URL
+    let directory: URL
 }
 
-/// The source revision and Git blob object IDs are immutable. Each downloaded
-/// payload is checked against its Git object ID before it is accepted.
+/// Pinned Cryptex DDI payloads. Git blob IDs are verified before any file is used.
 enum DeveloperImageStore {
     private static let revision = "dcec53989fa57695c2b3d3e11c2585f4735b2fef"
-    private static let base = "https://raw.githubusercontent.com/doronz88/DeveloperDiskImage/\(revision)/PersonalizedImages/Xcode_iOS_DDI_Personalized"
+    private static let base = "https://raw.githubusercontent.com/doronz88/DeveloperDiskImage/\(revision)/PersonalizedImages/Xcode_iOS_DDI_Cryptex"
 
     private struct Asset {
         let name: String
-        let gitBlobSHA1: String
+        let blobID: String
     }
 
     private static let assets = [
-        Asset(name: "Image.dmg", gitBlobSHA1: "1e1f423fa6db5570fa8c00c683ce77cda14e8b99"),
-        Asset(name: "Image.dmg.trustcache", gitBlobSHA1: "5d313bf7958c3f482a556d13cf6c6f22a0012835"),
-        Asset(name: "BuildManifest.plist", gitBlobSHA1: "ecd4f63bc38be1682b3f9f52e82cff63dfa5057f")
+        Asset(name: "Image.dmg", blobID: "dd404fd2770097e3b0799b02ca8fdecb077b3af0"),
+        Asset(name: "Image.dmg.trustcache", blobID: "c82e227c779a726cf7a8ebf4a12d807d3d0d9ac4"),
+        Asset(name: "Image.dmg.cryptex_info", blobID: "9be13ce00289d8cc46315ed7f975a89be3af9dd1"),
+        Asset(name: "Image.dmg.root_hash", blobID: "85fc5c4d3be2226e9197bfa339a5ad5b7eb61a5c"),
+        Asset(name: "BuildManifest.plist", blobID: "8a1bdfb94677db0a935749c1daa57ffa0bd4b569")
     ]
 
     static var paths: DeveloperImagePaths {
-        DeveloperImagePaths(
-            image: directory.appendingPathComponent("Image.dmg"),
-            trustCache: directory.appendingPathComponent("Image.dmg.trustcache"),
-            buildManifest: directory.appendingPathComponent("BuildManifest.plist")
-        )
+        DeveloperImagePaths(directory: directory)
     }
 
     static func ensureDownloaded(progress: @escaping @Sendable (String) -> Void) async throws {
@@ -42,11 +37,11 @@ enum DeveloperImageStore {
         for asset in assets {
             let destination = directory.appendingPathComponent(asset.name)
             if let existing = try? Data(contentsOf: destination, options: .mappedIfSafe),
-               gitBlobSHA1(existing) == asset.gitBlobSHA1 {
+               gitBlobSHA1(existing) == asset.blobID {
                 continue
             }
 
-            progress("下載 \(asset.name)…")
+            progress("下載並驗證 \(asset.name)…")
             guard let url = URL(string: "\(base)/\(asset.name)") else {
                 throw DeveloperImageStoreError.invalidURL
             }
@@ -54,11 +49,19 @@ enum DeveloperImageStore {
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 throw DeveloperImageStoreError.downloadFailed(asset.name)
             }
-            guard gitBlobSHA1(data) == asset.gitBlobSHA1 else {
+            guard gitBlobSHA1(data) == asset.blobID else {
                 throw DeveloperImageStoreError.integrityFailed(asset.name)
             }
             try data.write(to: destination, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: destination.path)
+        }
+
+        let manifestURL = directory.appendingPathComponent("BuildManifest.plist")
+        let manifestData = try Data(contentsOf: manifestURL)
+        guard let manifest = try PropertyListSerialization.propertyList(from: manifestData, options: [], format: nil) as? [String: Any],
+              let identities = manifest["BuildIdentities"] as? [Any],
+              !identities.isEmpty else {
+            throw DeveloperImageStoreError.invalidManifest
         }
     }
 
@@ -83,12 +86,14 @@ enum DeveloperImageStoreError: LocalizedError {
     case invalidURL
     case downloadFailed(String)
     case integrityFailed(String)
+    case invalidManifest
 
     var errorDescription: String? {
         switch self {
         case .invalidURL: return "Developer Image download URL is invalid."
         case .downloadFailed(let name): return "Could not download \(name)."
-        case .integrityFailed(let name): return "\(name) failed its pinned Git SHA-1 integrity check."
+        case .integrityFailed(let name): return "\(name) failed its pinned Git object integrity check."
+        case .invalidManifest: return "The downloaded Developer Image manifest is not valid."
         }
     }
 }
