@@ -1,37 +1,35 @@
 <!DOCTYPE html>
-<!-- saved from url=(0031)https://cus23.github.io/FlyPin/ -->
-<html lang="zh-Hant"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <link rel="preconnect" href="https://fonts.googleapis.com/">
-  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-  <link href="./FlyPin_files/css2" rel="stylesheet">
-  
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f7f3eb">
-  <meta name="description" content="FlyPin - Select and save your favorite places.">
+  <meta name="theme-color" content="#f7f4ed">
+  <meta name="description" content="FlyPin — Choose, save, and manage locations on a map.">
 
-  <title>FlyPin</title>
+  <title>FlyPin — Choose Your Location</title>
 
-  <!-- Website icons -->
-  <link rel="icon" type="image/png" href="./FlyPin_files/icon.png">
-  <link rel="apple-touch-icon" href="./FlyPin_files/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Basic web app manifest -->
-  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22FlyPin%22%2C%22short_name%22%3A%22FlyPin%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f7f3eb%22%2C%22theme_color%22%3A%22%23f7f3eb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/png%22%7D%5D%7D">
-
-  <link rel="stylesheet" href="./FlyPin_files/leaflet.css">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
 
   <style>
     :root {
-      --cream: #f7f3eb;
-      --paper: #fffdf8;
-      --sand: #e9dfd0;
-      --brown: #75604c;
-      --dark: #40372e;
-      --muted: #9b8d7c;
-      --accent: #a88968;
-      --accent-dark: #806347;
-      --danger: #b76b5c;
-      --shadow: 0 8px 30px rgba(75, 58, 39, 0.08);
+      --bg: #f7f4ed;
+      --panel: #fffdf8;
+      --text: #292820;
+      --muted: #858174;
+      --line: #e8e3d8;
+      --accent: #a66e4e;
+      --accent-dark: #89573c;
+      --soft: #eee8dc;
+      --danger: #b85c50;
+      --shadow: 0 8px 28px rgba(48, 40, 28, 0.08);
+      --radius: 16px;
     }
 
     * {
@@ -40,11 +38,10 @@
 
     body {
       margin: 0;
-      background: var(--cream);
-      color: var(--dark);
-      font-family:
-        -apple-system, BlinkMacSystemFont,
-        "Segoe UI", sans-serif;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", sans-serif;
     }
 
     button,
@@ -57,17 +54,20 @@
     }
 
     .app {
-      width: min(100% - 32px, 960px);
-      margin: 0 auto;
-      padding: 30px 0 50px;
-    }
-    
-    header {
+      min-height: 100vh;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+    }
+
+    header {
+      height: 76px;
+      padding: 0 34px;
+      display: flex;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 28px;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      z-index: 500;
     }
 
     .brand {
@@ -76,616 +76,725 @@
       gap: 12px;
     }
 
-    .brand img {
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
-      border-radius: 12px;
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 19px;
     }
 
-    .brand h1 {
-      margin: 0;
-      font-family: "DM Serif Display", Georgia, serif;
-      font-size: 30px;
-      font-weight: 400;
-      letter-spacing: 1.5px;
+    .brand-name {
+      font-family: "DM Serif Display", serif;
+      font-size: 25px;
+      letter-spacing: -0.5px;
     }
 
-    .brand p {
-      margin: 4px 0 0;
+    .header-note {
       color: var(--muted);
       font-size: 12px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
     }
 
-    .places-button {
-      border: 1px solid var(--sand);
-      background: var(--paper);
-      color: var(--brown);
-      border-radius: 14px;
-      padding: 11px 15px;
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .places-button:hover {
-      background: var(--sand);
-    }
-
-    .panel {
-      background: var(--paper);
-      border: 1px solid rgba(180, 157, 128, 0.18);
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: var(--shadow);
-      margin-bottom: 18px;
-    }
-
-    .section-title {
-      margin: 0 0 16px;
-      font-size: 16px;
-      font-weight: 650;
-    }
-
-    .search-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .search-row input {
+    main {
+      width: 100%;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 30px 34px;
       flex: 1;
+      display: grid;
+      grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
+      gap: 26px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
       min-width: 0;
     }
 
-    input {
+    .intro {
+      padding: 4px 2px 8px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 8px 0;
+      font-family: "DM Serif Display", serif;
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 1.12;
+    }
+
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .search-wrap {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
       width: 100%;
-      border: 1px solid var(--sand);
-      border-radius: 12px;
-      background: #fffefa;
-      color: var(--dark);
-      padding: 12px 14px;
+      min-width: 0;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
       outline: none;
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      transition: border-color 0.2s;
     }
 
     input:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(168, 137, 104, 0.12);
-    }
-
-    input::placeholder {
-      color: #b5a999;
     }
 
     .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 12px 17px;
-      background: var(--accent);
-      color: white;
+      min-height: 40px;
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--text);
+      font-size: 12px;
       font-weight: 600;
+      transition: 0.2s;
       white-space: nowrap;
     }
 
     .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    .btn-primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      border-color: var(--accent-dark);
       background: var(--accent-dark);
+      color: white;
     }
 
-    .btn-secondary {
-      background: #eee6da;
-      color: var(--brown);
-    }
-
-    .btn-secondary:hover {
-      background: #e5d9c9;
+    .btn-soft {
+      background: var(--soft);
+      border-color: var(--soft);
     }
 
     .btn-danger {
-      background: #f4e7e2;
       color: var(--danger);
     }
 
-    .btn-danger:hover {
-      background: #eedbd4;
+    .search-results {
+      display: none;
+      margin-top: 10px;
+      max-height: 190px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
     }
 
-    .search-results {
-      margin-top: 10px;
-      display: none;
-      border: 1px solid var(--sand);
-      border-radius: 12px;
-      overflow: hidden;
+    .search-results.show {
+      display: block;
     }
 
     .search-result {
       width: 100%;
-      border: none;
-      border-bottom: 1px solid var(--sand);
-      background: var(--paper);
-      color: var(--dark);
+      padding: 11px 12px;
+      display: block;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: var(--text);
       text-align: left;
-      padding: 12px;
-      font-size: 13px;
+      font-size: 12px;
+      line-height: 1.5;
     }
 
     .search-result:last-child {
-      border-bottom: none;
+      border-bottom: 0;
     }
 
     .search-result:hover {
-      background: var(--cream);
-    }
-    #confirmBtn {
-      width: 100%;
-      min-height: 56px;
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      border-radius: 14px;
-      box-shadow: 0 5px 14px rgba(128, 99, 71, 0.18);
-    }
-    #map {
-      height: 390px;
-      width: 100%;
-      border-radius: 16px;
-      z-index: 1;
-      background: #e9e2d6;
+      background: var(--soft);
     }
 
-    .map-note {
-      margin: 12px 0 0;
+    .search-result small {
+      display: block;
+      margin-top: 3px;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
+      font-size: 10px;
     }
 
     .coordinate-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .field label {
       display: block;
-      font-size: 12px;
-      color: var(--muted);
       margin-bottom: 7px;
-    }
-
-    .combined-field {
-      margin-top: 14px;
-    }
-
-    .action-row {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 16px;
-      width: 100%;
-    }
-    .secondary-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      width: 100%;
-    }
-    .secondary-actions button {
-      width: 100%;
-      min-height: 44px;
-      background: #f1ece3;
-      color: #998875;
-      font-size: 13px;
-      font-weight: 500;
-      border: 1px solid #e9dfd0;
-    }
-    
-    .secondary-actions button:hover {
-      background: #e9dfd0;
-      color: #75604c;
-    }
-    .favorite-save-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .favorite-save-row input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .status {
-      margin-top: 14px;
-      min-height: 20px;
-      color: var(--brown);
-      font-size: 13px;
-    }
-
-    .small-note {
-      margin-top: 10px;
       color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .coordinate-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .coordinate-actions .btn {
+      flex: 1;
+    }
+
+    .combined-input {
+      margin-top: 12px;
+    }
+
+    .combined-input label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .selected-location {
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 10px;
+      background: #f5f0e7;
+    }
+
+    .selected-label {
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .selected-coordinates {
+      font-size: 13px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    .selected-hint {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .confirm-btn {
+      width: 100%;
+      height: 44px;
+      margin-top: 13px;
+      font-size: 13px;
+    }
+
+    .notice {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--accent);
+      background: #f7f1e9;
+      color: #756958;
       font-size: 11px;
       line-height: 1.6;
     }
 
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 11px;
-      padding: 15px 0;
-    }
-
-    /* Drawer */
-
-    .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(44, 36, 28, 0.32);
-      z-index: 1000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.25s;
-    }
-
-    .drawer-overlay.open {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .drawer {
-      position: fixed;
-      top: 0;
-      right: 0;
-      height: 100%;
-      height: 100dvh;
-      width: min(88vw, 370px);
-      background: var(--paper);
-      z-index: 1001;
-      padding: 24px 20px;
-      overflow-y: auto;
-      transform: translateX(105%);
-      transition: transform 0.28s ease;
-      box-shadow: -8px 0 30px rgba(50, 40, 30, 0.12);
-    }
-
-    .drawer.open {
-      transform: translateX(0);
-    }
-
-    .drawer-header {
+    .list-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .drawer-header h2 {
-      font-size: 19px;
-      margin: 0;
-    }
-
-    .close-drawer {
-      border: none;
-      background: var(--cream);
-      color: var(--brown);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      font-size: 20px;
-    }
-
-    .drawer-section {
-      margin-bottom: 28px;
-    }
-
-    .drawer-section-heading {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
       margin-bottom: 12px;
     }
 
-    .drawer-section-heading h3 {
-      font-size: 14px;
+    .list-header .section-title {
       margin: 0;
     }
 
-    .count {
+    .text-btn {
+      padding: 3px 0;
+      border: 0;
+      background: transparent;
       color: var(--muted);
       font-size: 11px;
+    }
+
+    .text-btn:hover {
+      color: var(--accent);
     }
 
     .place-list {
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 7px;
+      max-height: 180px;
+      overflow-y: auto;
     }
 
     .place-item {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 12px;
-      border: 1px solid var(--sand);
-      border-radius: 13px;
-      background: #fffefa;
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: white;
     }
 
-    .place-info {
+    .place-main {
       flex: 1;
       min-width: 0;
-      cursor: pointer;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      color: var(--text);
     }
 
     .place-name {
-      font-size: 13px;
+      display: block;
+      overflow: hidden;
+      font-size: 12px;
       font-weight: 600;
-      overflow-wrap: anywhere;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .place-coords {
-      margin-top: 5px;
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
       font-size: 10px;
-      color: var(--muted);
-      overflow-wrap: anywhere;
     }
 
-    .place-action {
-      flex-shrink: 0;
-      border: none;
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border: 0;
+      border-radius: 7px;
       background: transparent;
-      color: var(--danger);
-      padding: 7px;
-      font-size: 16px;
-    }
-
-    .empty-state {
-      padding: 18px 10px;
-      text-align: center;
       color: var(--muted);
-      font-size: 12px;
-      background: var(--cream);
-      border-radius: 12px;
-    }
-
-    .backup-area {
-      border-top: 1px solid var(--sand);
-      padding-top: 20px;
-      margin-top: 24px;
-    }
-
-    .backup-area h3 {
-      margin: 0 0 8px;
       font-size: 14px;
     }
 
-    .backup-area p {
-      margin: 0 0 13px;
+    .icon-btn:hover {
+      background: var(--soft);
+      color: var(--danger);
+    }
+
+    .empty-state {
+      padding: 15px 5px;
       color: var(--muted);
+      text-align: center;
       font-size: 11px;
-      line-height: 1.6;
     }
 
-    .backup-buttons {
+    .backup-actions {
       display: flex;
-      flex-direction: column;
-      gap: 9px;
+      gap: 8px;
     }
 
-    .backup-buttons button {
+    .backup-actions .btn {
+      flex: 1;
+      padding: 0 8px;
+    }
+
+    .map-panel {
+      position: relative;
+      min-height: 650px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #e9e6dd;
+      box-shadow: var(--shadow);
+    }
+
+    #map {
       width: 100%;
+      height: 100%;
+      min-height: 650px;
+      z-index: 1;
     }
 
-    .import-input {
-      display: none;
-    }
-
-    .backup-status {
-      margin-top: 10px;
-      color: var(--brown);
+    .map-tip {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      z-index: 400;
+      transform: translateX(-50%);
+      padding: 9px 15px;
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 30px;
+      background: rgba(255,253,248,0.94);
+      color: #625c50;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
       font-size: 11px;
-      line-height: 1.5;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
-    @media (max-width: 600px) {
-      .app {
-        width: min(100% - 24px, 960px);
-        padding-top: 20px;
+    .map-attribution {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 400;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(255,253,248,0.9);
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .map-attribution a {
+      color: var(--accent-dark);
+    }
+
+    .status-message {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 2000;
+      max-width: min(360px, calc(100vw - 44px));
+      padding: 13px 17px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: 0.25s;
+    }
+
+    .status-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .leaflet-control-zoom a {
+      color: var(--text) !important;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 22px 18px;
       }
 
-      .brand h1 {
-        font-size: 22px;
+      .sidebar {
+        order: 2;
       }
 
-      .panel {
-        padding: 17px;
-        border-radius: 17px;
+      .map-panel {
+        order: 1;
+        min-height: 440px;
       }
 
       #map {
-        height: 330px;
+        min-height: 440px;
       }
 
-      .search-row {
-        flex-direction: column;
-      }
-
-      .search-row button {
-        width: 100%;
-      }
-
-      .favorite-save-row {
-        flex-direction: column;
-      }
-
-      .favorite-save-row button {
-        width: 100%;
-      }
-
-      .places-button {
-        padding: 10px 12px;
+      .intro {
+        padding-top: 4px;
       }
     }
 
-    @media (max-width: 380px) {
-      .coordinate-grid {
-        grid-template-columns: 1fr;
+    @media (max-width: 520px) {
+      header {
+        height: 64px;
+        padding: 0 17px;
+      }
+
+      .brand-name {
+        font-size: 22px;
+      }
+
+      .header-note {
+        font-size: 9px;
+        letter-spacing: 0.7px;
+      }
+
+      main {
+        padding: 15px 12px 25px;
+        gap: 17px;
+      }
+
+      .map-panel,
+      #map {
+        min-height: 370px;
+      }
+
+      h1 {
+        font-size: 31px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .map-tip {
+        top: 12px;
+        font-size: 10px;
       }
     }
   </style>
 </head>
 
 <body>
-  <main class="app">
+  <div class="app">
+
     <header>
       <div class="brand">
-        <img src="./FlyPin_files/icon.png" alt="FlyPin icon">
-        <div>
-          <h1>FlyPin</h1>
-          <p>Choose a place. Save your spot.</p>
-        </div>
+        <div class="brand-mark">⌖</div>
+        <div class="brand-name">FlyPin</div>
       </div>
-
-      <button class="places-button" id="openDrawer" type="button" aria-label="Open My Places">
-        ♡ My Places
-      </button>
+      <div class="header-note">Your personal location picker</div>
     </header>
 
-    <section class="panel">
-      <h2 class="section-title">Find a place</h2>
+    <main>
+      <aside class="sidebar">
 
-      <div class="search-row">
-        <input id="searchInput" type="text" placeholder="Search a landmark or address..." autocomplete="off">
-        <button class="btn" id="searchBtn" type="button">Search</button>
-      </div>
+        <section class="intro">
+          <div class="eyebrow">Explore · Select · Save</div>
+          <h1>Choose your<br>destination.</h1>
+          <p>Search for a place or select any point on the map. Save your favorite locations for later.</p>
+        </section>
 
-      <div class="search-results" id="searchResults"></div>
-    </section>
+        <section class="panel">
+          <h2 class="section-title">Search a place</h2>
 
-    <section class="panel">
-      <h2 class="section-title">Choose your location</h2>
-      <div id="map" aria-label="Interactive location map" class="leaflet-container leaflet-touch leaflet-retina leaflet-fade-anim leaflet-grab leaflet-touch-drag leaflet-touch-zoom" tabindex="0" style="position: relative;"><div class="leaflet-pane leaflet-map-pane" style="transform: translate3d(0px, 0px, 0px);"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer " style="z-index: 1; opacity: 1;"><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 18; transform: translate3d(33px, -1px, 0px) scale(2);"></div><div class="leaflet-tile-container leaflet-zoom-animated" style="z-index: 19; transform: translate3d(-461px, -33px, 0px) scale(1);"><img alt="" src="./FlyPin_files/3507.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508.png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(640px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(1).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(896px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3507(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, 62px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3506(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, -194px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(2).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(384px, 318px, 0px); opacity: 1;"><img alt="" src="./FlyPin_files/3508(3).png" class="leaflet-tile leaflet-tile-loaded" style="width: 256px; height: 256px; transform: translate3d(1152px, 318px, 0px); opacity: 1;"></div></div></div><div class="leaflet-pane leaflet-overlay-pane"></div><div class="leaflet-pane leaflet-shadow-pane"><img src="./FlyPin_files/marker-shadow.png" class="leaflet-marker-shadow leaflet-zoom-animated" alt="" style="margin-left: -12px; margin-top: -41px; width: 41px; height: 41px; transform: translate3d(509px, 111px, 0px);"></div><div class="leaflet-pane leaflet-marker-pane"><img src="./FlyPin_files/marker-icon-2x.png" class="leaflet-marker-icon leaflet-zoom-animated leaflet-interactive leaflet-marker-draggable" alt="Marker" tabindex="0" role="button" style="margin-left: -12px; margin-top: -41px; width: 25px; height: 41px; transform: translate3d(509px, 111px, 0px); z-index: 111;"></div><div class="leaflet-pane leaflet-tooltip-pane"></div><div class="leaflet-pane leaflet-popup-pane"></div><div class="leaflet-proxy leaflet-zoom-animated" style="transform: translate3d(1.75669e+06px, 897958px, 0px) scale(4096);"></div></div><div class="leaflet-control-container"><div class="leaflet-top leaflet-left"><div class="leaflet-control-zoom leaflet-bar leaflet-control"><a class="leaflet-control-zoom-in" href="https://cus23.github.io/FlyPin/#" title="Zoom in" role="button" aria-label="Zoom in" aria-disabled="false"><span aria-hidden="true">+</span></a><a class="leaflet-control-zoom-out" href="https://cus23.github.io/FlyPin/#" title="Zoom out" role="button" aria-label="Zoom out" aria-disabled="false"><span aria-hidden="true">−</span></a></div></div><div class="leaflet-top leaflet-right"></div><div class="leaflet-bottom leaflet-left"></div><div class="leaflet-bottom leaflet-right"><div class="leaflet-control-attribution leaflet-control"><a href="https://leafletjs.com/" title="A JavaScript library for interactive maps"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" class="leaflet-attribution-flag"><path fill="#4C7BE1" d="M0 0h12v4H0z"></path><path fill="#FFD500" d="M0 4h12v3H0z"></path><path fill="#E0BC00" d="M0 7h12v1H0z"></path></svg> Leaflet</a> <span aria-hidden="true">|</span> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</div></div></div></div>
-      <p class="map-note">
-        Tap anywhere on the map or drag the pin to select a location.
-      </p>
-    </section>
+          <form id="searchForm">
+            <div class="search-wrap">
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Search city, address, or place..."
+                autocomplete="off"
+              >
+              <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+          </form>
 
-    <section class="panel">
-      <h2 class="section-title">Coordinates</h2>
+          <div id="searchResults" class="search-results"></div>
+        </section>
 
-      <div class="coordinate-grid">
-        <div class="field">
-          <label for="latitude">Latitude</label>
-          <input id="latitude" type="number" step="any" placeholder="25.0330">
-        </div>
+        <section class="panel">
+          <h2 class="section-title">Coordinates</h2>
 
-        <div class="field">
-          <label for="longitude">Longitude</label>
-          <input id="longitude" type="number" step="any" placeholder="121.5654">
-        </div>
-      </div>
+          <div class="coordinate-grid">
+            <div class="field">
+              <label for="latitude">Latitude</label>
+              <input id="latitude" type="number" step="any" placeholder="25.0330">
+            </div>
 
-      <div class="field combined-field">
-        <label for="combinedCoords">Or enter coordinates together</label>
-        <input id="combinedCoords" type="text" placeholder="25.0330, 121.5654">
-      </div>
-      
-      <div class="action-row">
-        <div class="secondary-actions">
-          <button class="btn btn-secondary" id="applyCoordsBtn" type="button">
-            Apply
+            <div class="field">
+              <label for="longitude">Longitude</label>
+              <input id="longitude" type="number" step="any" placeholder="121.5654">
+            </div>
+          </div>
+
+          <div class="coordinate-actions">
+            <button id="applyCoordinates" class="btn btn-primary" type="button">
+              Apply
+            </button>
+            <button id="copyCoordinates" class="btn" type="button">
+              Copy
+            </button>
+          </div>
+
+          <div class="combined-input">
+            <label for="combinedCoordinates">Or enter coordinates together</label>
+            <div class="search-wrap">
+              <input
+                id="combinedCoordinates"
+                type="text"
+                placeholder="25.0330, 121.5654"
+              >
+              <button id="applyCombined" class="btn" type="button">Go</button>
+            </div>
+          </div>
+
+          <div class="selected-location">
+            <div class="selected-label">Selected location</div>
+            <div id="selectedCoordinates" class="selected-coordinates">
+              25.0330, 121.5654
+            </div>
+            <div class="selected-hint">Click the map or drag the pin to change.</div>
+          </div>
+
+          <button id="confirmFly" class="btn btn-primary confirm-btn" type="button">
+            Confirm Fly
           </button>
-      
-          <button class="btn btn-secondary" id="copyBtn" type="button">
-            Copy
-          </button>
+
+          <div class="notice">
+            Confirm Fly saves the selected coordinates inside FlyPin. It does not change your iPhone's system GPS location or the location reported to other apps.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="list-header">
+            <h2 class="section-title">Favorites</h2>
+            <button id="clearFavorites" class="text-btn" type="button">Clear all</button>
+          </div>
+          <div id="favoritesList" class="place-list">
+            <div class="empty-state">No favorites saved yet.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="list-header">
+            <h2 class="section-title">Recent locations</h2>
+            <button id="clearRecent" class="text-btn" type="button">Clear</button>
+          </div>
+          <div id="recentList" class="place-list">
+            <div class="empty-state">No recent locations.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="section-title">Backup your data</h2>
+          <div class="backup-actions">
+            <button id="exportData" class="btn" type="button">Export JSON</button>
+            <button id="importData" class="btn" type="button">Import JSON</button>
+            <input id="importFile" type="file" accept=".json,application/json" hidden>
+          </div>
+        </section>
+
+      </aside>
+
+      <section class="map-panel">
+        <div class="map-tip">Click anywhere on the map to place your pin</div>
+        <div id="map" aria-label="Interactive location map"></div>
+        <div class="map-attribution">
+          Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
         </div>
-      
-        <button class="btn" id="confirmBtn" type="button">
-          Confirm Fly
-        </button>
-      </div>
+      </section>
+    </main>
+  </div>
 
-      <div class="favorite-save-row">
-        <input id="favoriteName" type="text" maxlength="50" placeholder="Name this favorite place...">
-        <button class="btn btn-secondary" id="saveFavoriteBtn" type="button">
-          ♡ Save
-        </button>
-      </div>
+  <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
 
-      <div class="status" id="status" role="status" aria-live="polite"></div>
-
-    </section>
-
-    <footer>
-      Map data © OpenStreetMap contributors · Search powered by Nominatim
-    </footer>
-  </main>
-
-  <!-- Drawer overlay -->
-  <div class="drawer-overlay" id="drawerOverlay"></div>
-
-  <!-- My Places drawer -->
-  <aside class="drawer" id="drawer" aria-label="My Places" aria-hidden="true">
-    <div class="drawer-header">
-      <h2>My Places</h2>
-      <button class="close-drawer" id="closeDrawer" type="button" aria-label="Close My Places">×</button>
-    </div>
-
-    <section class="drawer-section">
-      <div class="drawer-section-heading">
-        <h3>♡ Favorites</h3>
-        <span class="count" id="favoriteCount">0 places</span>
-      </div>
-      <div class="place-list" id="favoriteList"><div class="empty-state">No favorites saved yet.</div></div>
-    </section>
-
-    <section class="drawer-section">
-      <div class="drawer-section-heading">
-        <h3>Recently Used</h3>
-        <button class="place-action" id="clearRecentBtn" type="button" aria-label="Clear recent places" title="Clear recent places">Clear</button>
-      </div>
-      <div class="place-list" id="recentList"><div class="empty-state">No recent places yet.</div></div>
-    </section>
-
-    <section class="backup-area">
-      <h3>Backup &amp; Restore</h3>
-      <p>
-        Export your favorites as a JSON file, or import a previous backup.
-        Keep the downloaded file somewhere safe.
-      </p>
-
-      <div class="backup-buttons">
-        <button class="btn" id="exportBtn" type="button">
-          ↓ Export favorites JSON
-        </button>
-
-        <button class="btn btn-secondary" id="importBtn" type="button">
-          ↑ Import favorites JSON
-        </button>
-
-        <input class="import-input" id="importFile" type="file" accept=".json,application/json">
-      </div>
-
-      <div class="backup-status" id="backupStatus" role="status" aria-live="polite"></div>
-    </section>
-  </aside>
-
-  <script src="./FlyPin_files/leaflet.js.下載"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // --------------------------------
-    // Storage
-    // --------------------------------
+    "use strict";
 
-    const FAVORITES_KEY = "flypin_favorites";
-    const RECENT_KEY = "flypin_recent";
+    // ==========================================
+    // FlyPin configuration
+    // ==========================================
+
+    const STORAGE_KEYS = {
+      favorites: "flypin_favorites",
+      recent: "flypin_recent"
+    };
+
+    const DEFAULT_LOCATION = {
+      lat: 25.0330,
+      lng: 121.5654,
+      name: "Taipei, Taiwan"
+    };
+
+    const MAX_FAVORITES = 100;
+    const MAX_RECENT = 20;
+
+    // ==========================================
+    // DOM elements
+    // ==========================================
+
+    const $ = (id) => document.getElementById(id);
+
+    const latitudeInput = $("latitude");
+    const longitudeInput = $("longitude");
+    const combinedInput = $("combinedCoordinates");
+    const selectedCoordinates = $("selectedCoordinates");
+    const searchInput = $("searchInput");
+    const searchResults = $("searchResults");
+    const favoritesList = $("favoritesList");
+    const recentList = $("recentList");
+    const statusMessage = $("statusMessage");
+
+    // ==========================================
+    // State
+    // ==========================================
+
+    let selectedLocation = { ...DEFAULT_LOCATION };
+    let favorites = loadPlaces(STORAGE_KEYS.favorites);
+    let recentLocations = loadPlaces(STORAGE_KEYS.recent);
+    let statusTimer = null;
+
+    // ==========================================
+    // Storage
+    // ==========================================
 
     function loadPlaces(key) {
       try {
-        const data = JSON.parse(localStorage.getItem(key) || "[]");
-        return Array.isArray(data) ? data : [];
+        const raw = localStorage.getItem(key);
+        if (!raw) return [];
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed.filter((item) =>
+          item &&
+          Number.isFinite(Number(item.lat)) &&
+          Number.isFinite(Number(item.lng)) &&
+          Number(item.lat) >= -90 &&
+          Number(item.lat) <= 90 &&
+          Number(item.lng) >= -180 &&
+          Number(item.lng) <= 180
+        );
       } catch (error) {
-        console.warn("Unable to read saved places:", error);
+        console.error("Could not load saved locations:", error);
         return [];
       }
     }
@@ -695,87 +804,74 @@
         localStorage.setItem(key, JSON.stringify(places));
         return true;
       } catch (error) {
-        console.error("Unable to save places:", error);
-        setStatus("Unable to save. Browser storage may be unavailable.");
+        console.error("Could not save locations:", error);
+        showMessage("Unable to save data. Check your browser storage settings.");
         return false;
       }
     }
 
-    let favorites = loadPlaces(FAVORITES_KEY);
-    let recentPlaces = loadPlaces(RECENT_KEY);
+    // ==========================================
+    // Map initialization
+    // ==========================================
 
-    // --------------------------------
-    // Map
-    // --------------------------------
+    if (typeof L === "undefined") {
+      throw new Error("Leaflet could not be loaded. Check your internet connection.");
+    }
 
-    const initialLat = 25.0330;
-    const initialLng = 121.5654;
-
-    const map = L.map("map").setView(
-      [initialLat, initialLng],
+    const map = L.map("map", {
+      zoomControl: true,
+      scrollWheelZoom: true
+    }).setView(
+      [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
       14
     );
 
-    L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: ""
+    }).addTo(map);
+
+    const pinIcon = L.divIcon({
+      className: "",
+      html: `
+        <div style="
+          width: 25px;
+          height: 25px;
+          background: #a66e4e;
+          border: 3px solid white;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 2px 8px rgba(0,0,0,.3);
+        "></div>
+      `,
+      iconSize: [25, 25],
+      iconAnchor: [12, 25]
+    });
+
+    const marker = L.marker(
+      [DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng],
       {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+        icon: pinIcon,
+        draggable: true
       }
     ).addTo(map);
 
-    let currentLat = initialLat;
-    let currentLng = initialLng;
+    // ==========================================
+    // General helpers
+    // ==========================================
 
-    const marker = L.marker(
-      [currentLat, currentLng],
-      { draggable: true }
-    ).addTo(map);
+    function showMessage(message) {
+      statusMessage.textContent = message;
+      statusMessage.classList.add("show");
 
-    marker.on("dragend", function () {
-      const position = marker.getLatLng();
-      updateCoordinates(position.lat, position.lng);
-      setStatus("Pin location updated.");
-    });
+      clearTimeout(statusTimer);
 
-    map.on("click", function (event) {
-      updateCoordinates(event.latlng.lat, event.latlng.lng);
-      setStatus("Pin location updated.");
-    });
-
-    // --------------------------------
-    // Elements
-    // --------------------------------
-
-    const latitudeInput = document.getElementById("latitude");
-    const longitudeInput = document.getElementById("longitude");
-    const combinedInput = document.getElementById("combinedCoords");
-
-    const statusElement = document.getElementById("status");
-
-    function setStatus(message) {
-      statusElement.textContent = message;
+      statusTimer = setTimeout(() => {
+        statusMessage.classList.remove("show");
+      }, 3000);
     }
 
-    function formatCoordinate(value) {
-      return Number(value).toFixed(6);
-    }
-
-    function updateCoordinates(lat, lng) {
-      currentLat = Number(lat);
-      currentLng = Number(lng);
-
-      marker.setLatLng([currentLat, currentLng]);
-
-      latitudeInput.value = formatCoordinate(currentLat);
-      longitudeInput.value = formatCoordinate(currentLng);
-
-      combinedInput.value =
-        formatCoordinate(currentLat) + ", " +
-        formatCoordinate(currentLng);
-    }
-
-    function validCoordinates(lat, lng) {
+    function isValidCoordinates(lat, lng) {
       return (
         Number.isFinite(lat) &&
         Number.isFinite(lng) &&
@@ -786,118 +882,215 @@
       );
     }
 
-    function applyCoordinates(lat, lng) {
-      if (!validCoordinates(lat, lng)) {
-        setStatus("Invalid coordinates. Please check the latitude and longitude.");
+    function formatCoordinates(lat, lng) {
+      return `${Number(lat).toFixed(6)}, ${Number(lng).toFixed(6)}`;
+    }
+
+    function normalizePlace(place) {
+      return {
+        lat: Number(place.lat),
+        lng: Number(place.lng),
+        name: String(place.name || "Unnamed location"),
+        savedAt: place.savedAt || new Date().toISOString()
+      };
+    }
+
+    // ==========================================
+    // Selected location
+    // ==========================================
+
+    function updateSelectedLocation(lat, lng, options = {}) {
+      lat = Number(lat);
+      lng = Number(lng);
+
+      if (!isValidCoordinates(lat, lng)) {
+        showMessage("Invalid coordinates. Please check your input.");
         return false;
       }
 
-      updateCoordinates(lat, lng);
-      map.setView([lat, lng], 15);
-      setStatus("Coordinates applied.");
+      selectedLocation = {
+        lat,
+        lng,
+        name: options.name || "Selected location"
+      };
+
+      marker.setLatLng([lat, lng]);
+
+      if (options.pan !== false) {
+        map.setView([lat, lng], options.zoom || Math.max(map.getZoom(), 14));
+      }
+
+      latitudeInput.value = lat.toFixed(6);
+      longitudeInput.value = lng.toFixed(6);
+      combinedInput.value = formatCoordinates(lat, lng);
+      selectedCoordinates.textContent = formatCoordinates(lat, lng);
+
       return true;
     }
 
-    updateCoordinates(initialLat, initialLng);
+    map.on("click", (event) => {
+      updateSelectedLocation(
+        event.latlng.lat,
+        event.latlng.lng,
+        { pan: false }
+      );
+    });
 
-    // --------------------------------
+    marker.on("dragend", () => {
+      const position = marker.getLatLng();
+
+      updateSelectedLocation(
+        position.lat,
+        position.lng,
+        { pan: false }
+      );
+    });
+
+    // ==========================================
     // Coordinate input
-    // --------------------------------
+    // ==========================================
 
-    document
-      .getElementById("applyCoordsBtn")
-      .addEventListener("click", function () {
-        const latText = latitudeInput.value.trim();
-        const lngText = longitudeInput.value.trim();
+    function applyCoordinateInputs() {
+      const lat = Number(latitudeInput.value);
+      const lng = Number(longitudeInput.value);
 
-        if (latText === "" || lngText === "") {
-          setStatus("Please enter both latitude and longitude.");
-          return;
+      if (
+        latitudeInput.value.trim() === "" ||
+        longitudeInput.value.trim() === "" ||
+        !isValidCoordinates(lat, lng)
+      ) {
+        showMessage("Please enter valid latitude and longitude values.");
+        return;
+      }
+
+      updateSelectedLocation(lat, lng);
+      showMessage("Coordinates updated.");
+    }
+
+    function applyCombinedCoordinates() {
+      const value = combinedInput.value.trim();
+
+      const match = value.match(
+        /^\s*(-?\d+(?:\.\d+)?)\s*[,，\s]\s*(-?\d+(?:\.\d+)?)\s*$/
+      );
+
+      if (!match) {
+        showMessage("Use this format: 25.0330, 121.5654");
+        return;
+      }
+
+      const lat = Number(match[1]);
+      const lng = Number(match[2]);
+
+      if (!isValidCoordinates(lat, lng)) {
+        showMessage("Coordinates are outside the valid range.");
+        return;
+      }
+
+      updateSelectedLocation(lat, lng);
+      showMessage("Location updated.");
+    }
+
+    $("applyCoordinates").addEventListener("click", applyCoordinateInputs);
+    $("applyCombined").addEventListener("click", applyCombinedCoordinates);
+
+    [latitudeInput, longitudeInput].forEach((input) => {
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          applyCoordinateInputs();
         }
-
-        applyCoordinates(Number(latText), Number(lngText));
       });
+    });
 
-    combinedInput.addEventListener("keydown", function (event) {
+    combinedInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         applyCombinedCoordinates();
       }
     });
 
-    function applyCombinedCoordinates() {
-      const value = combinedInput.value.trim();
+    $("copyCoordinates").addEventListener("click", async () => {
+      const text = formatCoordinates(
+        selectedLocation.lat,
+        selectedLocation.lng
+      );
 
-      const parts = value.split(/[,\s]+/).filter(Boolean);
-
-      if (parts.length !== 2) {
-        setStatus("Please enter coordinates in the format: latitude, longitude.");
-        return;
-      }
-
-      const lat = Number(parts[0]);
-      const lng = Number(parts[1]);
-
-      applyCoordinates(lat, lng);
-    }
-
-    // --------------------------------
-    // Copy coordinates
-    // --------------------------------
-
-    document
-      .getElementById("copyBtn")
-      .addEventListener("click", async function () {
-        const text =
-          formatCoordinate(currentLat) + ", " +
-          formatCoordinate(currentLng);
-
-        try {
-          await navigator.clipboard.writeText(text);
-          setStatus("Coordinates copied.");
-        } catch (error) {
-          setStatus("Unable to copy. Please copy the coordinates manually.");
-        }
-      });
-
-    // --------------------------------
-    // Search places
-    // --------------------------------
-
-    const searchInput = document.getElementById("searchInput");
-    const searchResults = document.getElementById("searchResults");
-
-    document
-      .getElementById("searchBtn")
-      .addEventListener("click", searchPlace);
-
-    searchInput.addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        searchPlace();
+      try {
+        await navigator.clipboard.writeText(text);
+        showMessage("Coordinates copied.");
+      } catch (error) {
+        showMessage("Clipboard access is unavailable in this browser.");
       }
     });
 
-    async function searchPlace() {
-      const query = searchInput.value.trim();
+    // ==========================================
+    // Confirm Fly
+    // ==========================================
 
-      if (!query) {
-        setStatus("Please enter a place name.");
+    $("confirmFly").addEventListener("click", () => {
+      const place = normalizePlace({
+        ...selectedLocation,
+        name: selectedLocation.name || "Selected location"
+      });
+
+      const nextRecent = [
+        place,
+        ...recentLocations.filter((item) =>
+          !(
+            Number(item.lat) === place.lat &&
+            Number(item.lng) === place.lng
+          )
+        )
+      ].slice(0, MAX_RECENT);
+
+      if (!savePlaces(STORAGE_KEYS.recent, nextRecent)) {
         return;
       }
 
-      searchResults.innerHTML = "";
-      searchResults.style.display = "block";
+      recentLocations = nextRecent;
+      renderRecent();
 
-      const loading = document.createElement("div");
-      loading.className = "search-result";
-      loading.textContent = "Searching...";
-      searchResults.appendChild(loading);
+      showMessage(
+        "Location saved in FlyPin. Your iPhone system location has not changed."
+      );
+    });
+
+    // ==========================================
+    // Search using OpenStreetMap Nominatim
+    // ==========================================
+
+    $("searchForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await searchPlaces();
+    });
+
+    async function searchPlaces() {
+      const query = searchInput.value.trim();
+
+      if (!query) {
+        showMessage("Enter a place or address to search.");
+        return;
+      }
+
+      searchResults.classList.add("show");
+      searchResults.innerHTML = `
+        <div class="empty-state">Searching...</div>
+      `;
 
       try {
-        const url =
-          "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=" +
-          encodeURIComponent(query);
+        const url = new URL(
+          "https://nominatim.openstreetmap.org/search"
+        );
 
-        const response = await fetch(url);
+        url.searchParams.set("q", query);
+        url.searchParams.set("format", "jsonv2");
+        url.searchParams.set("limit", "7");
+        url.searchParams.set("addressdetails", "1");
+
+        const response = await fetch(url.toString(), {
+          headers: {
+            "Accept": "application/json"
+          }
+        });
 
         if (!response.ok) {
           throw new Error("Search request failed.");
@@ -905,404 +1098,381 @@
 
         const results = await response.json();
 
-        searchResults.innerHTML = "";
-
-        if (!results.length) {
-          const empty = document.createElement("div");
-          empty.className = "search-result";
-          empty.textContent = "No results found.";
-          searchResults.appendChild(empty);
-          return;
-        }
-
-        results.forEach(function (place) {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "search-result";
-          button.textContent = place.display_name;
-
-          button.addEventListener("click", function () {
-            const lat = Number(place.lat);
-            const lng = Number(place.lon);
-
-            if (applyCoordinates(lat, lng)) {
-              searchResults.style.display = "none";
-              searchInput.value = place.display_name;
-              setStatus("Place selected.");
-            }
-          });
-
-          searchResults.appendChild(button);
-        });
+        renderSearchResults(results);
 
       } catch (error) {
-        searchResults.innerHTML = "";
+        console.error(error);
 
-        const errorMessage = document.createElement("div");
-        errorMessage.className = "search-result";
-        errorMessage.textContent = "Search failed. Please try again later.";
-
-        searchResults.appendChild(errorMessage);
+        searchResults.innerHTML = `
+          <div class="empty-state">
+            Search failed. Please try again later.
+          </div>
+        `;
       }
     }
 
-    // --------------------------------
-    // Favorites and recent places
-    // --------------------------------
+    function renderSearchResults(results) {
+      searchResults.innerHTML = "";
 
-    function isValidPlace(place) {
-      return (
-        place &&
-        typeof place === "object" &&
-        typeof place.name === "string" &&
-        Number.isFinite(Number(place.lat)) &&
-        Number.isFinite(Number(place.lng)) &&
-        validCoordinates(Number(place.lat), Number(place.lng))
-      );
-    }
-
-    function sameCoordinates(a, b) {
-      return (
-        Math.abs(Number(a.lat) - Number(b.lat)) < 0.000001 &&
-        Math.abs(Number(a.lng) - Number(b.lng)) < 0.000001
-      );
-    }
-
-    function renderSavedPlaces() {
-      renderPlaceItems(
-        favorites,
-        document.getElementById("favoriteList"),
-        "No favorites saved yet.",
-        "favorite"
-      );
-
-      renderPlaceItems(
-        recentPlaces,
-        document.getElementById("recentList"),
-        "No recent places yet.",
-        "recent"
-      );
-
-      document.getElementById("favoriteCount").textContent =
-        favorites.length + " places";
-    }
-
-    function renderPlaceItems(places, container, emptyMessage, type) {
-      container.replaceChildren();
-
-      if (!places.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty-state";
-        empty.textContent = emptyMessage;
-        container.appendChild(empty);
+      if (!results.length) {
+        searchResults.innerHTML = `
+          <div class="empty-state">No results found.</div>
+        `;
         return;
       }
 
-      places.forEach(function (place, index) {
-        const item = document.createElement("div");
-        item.className = "place-item";
+      results.forEach((result) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "search-result";
 
-        const info = document.createElement("div");
-        info.className = "place-info";
-        info.tabIndex = 0;
-        info.setAttribute("role", "button");
-        info.setAttribute("aria-label", "Select " + place.name);
+        const name = document.createElement("span");
+        name.textContent = result.name || result.display_name;
 
-        const name = document.createElement("div");
-        name.className = "place-name";
-        name.textContent = place.name;
+        const details = document.createElement("small");
+        details.textContent = result.display_name;
 
-        const coords = document.createElement("div");
-        coords.className = "place-coords";
-        coords.textContent =
-          formatCoordinate(place.lat) + ", " +
-          formatCoordinate(place.lng);
+        button.append(name, details);
 
-        info.appendChild(name);
-        info.appendChild(coords);
+        button.addEventListener("click", () => {
+          const lat = Number(result.lat);
+          const lng = Number(result.lon);
 
-        function selectPlace() {
-          if (applyCoordinates(Number(place.lat), Number(place.lng))) {
-            closeDrawer();
-            setStatus("Selected: " + place.name);
+          if (!updateSelectedLocation(lat, lng, {
+            name: result.display_name,
+            zoom: 16
+          })) {
+            return;
           }
-        }
 
-        info.addEventListener("click", selectPlace);
+          searchResults.classList.remove("show");
+          searchInput.value = result.name || result.display_name;
 
-        info.addEventListener("keydown", function (event) {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            selectPlace();
-          }
+          showMessage("Search result selected.");
         });
 
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "place-action";
-        deleteButton.type = "button";
-        deleteButton.textContent = "×";
-        deleteButton.setAttribute("aria-label", "Delete " + place.name);
-
-        deleteButton.addEventListener("click", function () {
-          if (type === "favorite") {
-            favorites.splice(index, 1);
-            savePlaces(FAVORITES_KEY, favorites);
-          } else {
-            recentPlaces.splice(index, 1);
-            savePlaces(RECENT_KEY, recentPlaces);
-          }
-
-          renderSavedPlaces();
-        });
-
-        item.appendChild(info);
-        item.appendChild(deleteButton);
-        container.appendChild(item);
+        searchResults.appendChild(button);
       });
     }
 
-    // Save favorite
-    document
-      .getElementById("saveFavoriteBtn")
-      .addEventListener("click", function () {
-        const nameInput = document.getElementById("favoriteName");
-        const name = nameInput.value.trim();
+    document.addEventListener("click", (event) => {
+      if (
+        !searchResults.contains(event.target) &&
+        event.target !== searchInput
+      ) {
+        searchResults.classList.remove("show");
+      }
+    });
 
-        if (!name) {
-          setStatus("Please enter a name for this favorite.");
-          nameInput.focus();
-          return;
-        }
+    // ==========================================
+    // Favorites
+    // ==========================================
 
-        const place = {
-          name: name,
-          lat: currentLat,
-          lng: currentLng
-        };
-
-        if (favorites.some(function (item) {
-          return sameCoordinates(item, place);
-        })) {
-          setStatus("This location is already in your favorites.");
-          return;
-        }
-
-        favorites.unshift(place);
-
-        if (savePlaces(FAVORITES_KEY, favorites)) {
-          nameInput.value = "";
-          renderSavedPlaces();
-          setStatus("Favorite saved.");
-        } else {
-          favorites.shift();
-        }
+    function addFavorite() {
+      const place = normalizePlace({
+        ...selectedLocation,
+        name: selectedLocation.name || "Saved location"
       });
 
-    // Confirm Fly
-    document
-      .getElementById("confirmBtn")
-      .addEventListener("click", function () {
-        const place = {
-          name: "Selected location",
-          lat: currentLat,
-          lng: currentLng
-        };
+      const alreadyExists = favorites.some((item) =>
+        Number(item.lat) === place.lat &&
+        Number(item.lng) === place.lng
+      );
 
-        recentPlaces = recentPlaces.filter(function (item) {
-          return !sameCoordinates(item, place);
-        });
+      if (alreadyExists) {
+        showMessage("This location is already in your favorites.");
+        return;
+      }
 
-        recentPlaces.unshift(place);
-        recentPlaces = recentPlaces.slice(0, 8);
+      if (favorites.length >= MAX_FAVORITES) {
+        showMessage(`You can save up to ${MAX_FAVORITES} favorites.`);
+        return;
+      }
 
-        if (savePlaces(RECENT_KEY, recentPlaces)) {
-          renderSavedPlaces();
-          setStatus(
-            "Location confirmed in FlyPin: " +
-            formatCoordinate(currentLat) + ", " +
-            formatCoordinate(currentLng)
-          );
-        }
-      });
+      const nextFavorites = [place, ...favorites];
 
-    // Clear recent places
-    document
-      .getElementById("clearRecentBtn")
-      .addEventListener("click", function () {
-        recentPlaces = [];
-        savePlaces(RECENT_KEY, recentPlaces);
-        renderSavedPlaces();
-      });
+      if (!savePlaces(STORAGE_KEYS.favorites, nextFavorites)) {
+        return;
+      }
 
-    // --------------------------------
-    // Export favorites JSON
-    // --------------------------------
+      favorites = nextFavorites;
+      renderFavorites();
 
-    document
-      .getElementById("exportBtn")
-      .addEventListener("click", function () {
-        const backup = {
-          app: "FlyPin",
-          version: 1,
-          exportedAt: new Date().toISOString(),
-          favorites: favorites
-        };
+      showMessage("Added to favorites.");
+    }
 
-        const json = JSON.stringify(backup, null, 2);
+    function removeFavorite(index) {
+      const nextFavorites = favorites.filter((_, i) => i !== index);
 
-        const blob = new Blob(
-          [json],
-          { type: "application/json" }
+      if (!savePlaces(STORAGE_KEYS.favorites, nextFavorites)) {
+        return;
+      }
+
+      favorites = nextFavorites;
+      renderFavorites();
+
+      showMessage("Favorite removed.");
+    }
+
+    function renderFavorites() {
+      favoritesList.innerHTML = "";
+
+      if (!favorites.length) {
+        favoritesList.innerHTML = `
+          <div class="empty-state">No favorites saved yet.</div>
+        `;
+        return;
+      }
+
+      favorites.forEach((place, index) => {
+        favoritesList.appendChild(
+          createPlaceItem(place, () => {
+            updateSelectedLocation(place.lat, place.lng, {
+              name: place.name,
+              zoom: 15
+            });
+            showMessage("Favorite location selected.");
+          }, () => removeFavorite(index))
         );
+      });
+    }
 
-        const url = URL.createObjectURL(blob);
+    // ==========================================
+    // Recent locations
+    // ==========================================
 
-        const link = document.createElement("a");
-        link.href = url;
-        link.download =
-          "FlyPin-favorites-" +
-          new Date().toISOString().slice(0, 10) +
-          ".json";
+    function renderRecent() {
+      recentList.innerHTML = "";
 
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+      if (!recentLocations.length) {
+        recentList.innerHTML = `
+          <div class="empty-state">No recent locations.</div>
+        `;
+        return;
+      }
 
+      recentLocations.forEach((place) => {
+        recentList.appendChild(
+          createPlaceItem(place, () => {
+            updateSelectedLocation(place.lat, place.lng, {
+              name: place.name,
+              zoom: 15
+            });
+            showMessage("Recent location selected.");
+          })
+        );
+      });
+    }
+
+    // ==========================================
+    // Shared place list item
+    // ==========================================
+
+    function createPlaceItem(place, onSelect, onDelete) {
+      const item = document.createElement("div");
+      item.className = "place-item";
+
+      const mainButton = document.createElement("button");
+      mainButton.type = "button";
+      mainButton.className = "place-main";
+      mainButton.addEventListener("click", onSelect);
+
+      const name = document.createElement("span");
+      name.className = "place-name";
+      name.textContent = place.name || "Unnamed location";
+
+      const coords = document.createElement("span");
+      coords.className = "place-coords";
+      coords.textContent = formatCoordinates(place.lat, place.lng);
+
+      mainButton.append(name, coords);
+      item.appendChild(mainButton);
+
+      if (onDelete) {
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "icon-btn";
+        deleteButton.textContent = "×";
+        deleteButton.title = "Remove";
+        deleteButton.setAttribute("aria-label", "Remove location");
+        deleteButton.addEventListener("click", onDelete);
+
+        item.appendChild(deleteButton);
+      }
+
+      return item;
+    }
+
+    // ==========================================
+    // Clear saved data
+    // ==========================================
+
+    $("clearFavorites").addEventListener("click", () => {
+      if (!favorites.length) return;
+
+      if (!confirm("Delete all favorite locations?")) return;
+
+      if (!savePlaces(STORAGE_KEYS.favorites, [])) return;
+
+      favorites = [];
+      renderFavorites();
+      showMessage("All favorites cleared.");
+    });
+
+    $("clearRecent").addEventListener("click", () => {
+      if (!recentLocations.length) return;
+
+      if (!confirm("Clear recent locations?")) return;
+
+      if (!savePlaces(STORAGE_KEYS.recent, [])) return;
+
+      recentLocations = [];
+      renderRecent();
+      showMessage("Recent locations cleared.");
+    });
+
+    // ==========================================
+    // Export JSON
+    // ==========================================
+
+    $("exportData").addEventListener("click", () => {
+      const backup = {
+        app: "FlyPin",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        favorites,
+        recentLocations
+      };
+
+      const blob = new Blob(
+        [JSON.stringify(backup, null, 2)],
+        { type: "application/json" }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `flypin-backup-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
         URL.revokeObjectURL(url);
+      }, 1500);
 
-        document.getElementById("backupStatus").textContent =
-          "Favorites backup exported.";
-      });
+      showMessage("Backup exported.");
+    });
 
-    // --------------------------------
-    // Import favorites JSON
-    // --------------------------------
+    // ==========================================
+    // Import JSON
+    // ==========================================
 
-    const importFile = document.getElementById("importFile");
+    $("importData").addEventListener("click", () => {
+      $("importFile").click();
+    });
 
-    document
-      .getElementById("importBtn")
-      .addEventListener("click", function () {
-        importFile.click();
-      });
-
-    importFile.addEventListener("change", async function () {
-      const file = importFile.files[0];
+    $("importFile").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
 
       if (!file) return;
-
-      const backupStatus = document.getElementById("backupStatus");
 
       try {
         const text = await file.text();
         const data = JSON.parse(text);
 
-        let importedPlaces;
-
-        // Support both the current backup format and a plain array.
-        if (Array.isArray(data)) {
-          importedPlaces = data;
-        } else if (
-          data &&
-          data.app === "FlyPin" &&
-          Array.isArray(data.favorites)
+        if (
+          !data ||
+          typeof data !== "object" ||
+          !Array.isArray(data.favorites)
         ) {
-          importedPlaces = data.favorites;
-        } else {
           throw new Error("Invalid backup format.");
         }
 
-        if (importedPlaces.length > 1000) {
-          throw new Error("Too many favorites in this file.");
+        const importedFavorites = data.favorites
+          .filter((place) =>
+            place &&
+            isValidCoordinates(Number(place.lat), Number(place.lng))
+          )
+          .map(normalizePlace)
+          .slice(0, MAX_FAVORITES);
+
+        const importedRecent = Array.isArray(data.recentLocations)
+          ? data.recentLocations
+              .filter((place) =>
+                place &&
+                isValidCoordinates(Number(place.lat), Number(place.lng))
+              )
+              .map(normalizePlace)
+              .slice(0, MAX_RECENT)
+          : [];
+
+        const shouldReplace = confirm(
+          "Replace your current favorites and recent locations with this backup?"
+        );
+
+        if (!shouldReplace) {
+          return;
         }
 
-        const validPlaces = importedPlaces
-          .filter(isValidPlace)
-          .map(function (place) {
-            return {
-              name: place.name.trim().slice(0, 50) || "Unnamed place",
-              lat: Number(place.lat),
-              lng: Number(place.lng)
-            };
-          });
+        // Save both datasets before updating the displayed state.
+        const oldFavorites = favorites;
+        const oldRecent = recentLocations;
 
-        if (!validPlaces.length && importedPlaces.length) {
-          throw new Error("No valid favorite places were found.");
+        const favoritesSaved = savePlaces(
+          STORAGE_KEYS.favorites,
+          importedFavorites
+        );
+
+        if (!favoritesSaved) {
+          return;
         }
 
-        let addedCount = 0;
+        const recentSaved = savePlaces(
+          STORAGE_KEYS.recent,
+          importedRecent
+        );
 
-        validPlaces.forEach(function (place) {
-          const exists = favorites.some(function (existing) {
-            return sameCoordinates(existing, place);
-          });
-
-          if (!exists) {
-            favorites.push(place);
-            addedCount++;
-          }
-        });
-
-        if (!savePlaces(FAVORITES_KEY, favorites)) {
-          throw new Error("Unable to save imported favorites.");
+        if (!recentSaved) {
+          // Roll back the favorites if the second write fails.
+          savePlaces(STORAGE_KEYS.favorites, oldFavorites);
+          savePlaces(STORAGE_KEYS.recent, oldRecent);
+          return;
         }
 
-        renderSavedPlaces();
+        favorites = importedFavorites;
+        recentLocations = importedRecent;
 
-        backupStatus.textContent =
-          "Import complete: " + addedCount +
-          " new favorites added. " +
-          (validPlaces.length - addedCount) +
-          " duplicates skipped.";
+        renderFavorites();
+        renderRecent();
+
+        showMessage("Backup imported successfully.");
 
       } catch (error) {
-        backupStatus.textContent =
-          "Import failed: " + error.message;
+        console.error(error);
+        showMessage("Import failed. Please select a valid FlyPin JSON backup.");
       } finally {
-        importFile.value = "";
+        event.target.value = "";
       }
     });
 
-    // --------------------------------
-    // Drawer controls
-    // --------------------------------
-
-    const drawer = document.getElementById("drawer");
-    const drawerOverlay = document.getElementById("drawerOverlay");
-
-    function openDrawer() {
-      drawer.classList.add("open");
-      drawerOverlay.classList.add("open");
-      drawer.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeDrawer() {
-      drawer.classList.remove("open");
-      drawerOverlay.classList.remove("open");
-      drawer.setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-    }
-
-    document
-      .getElementById("openDrawer")
-      .addEventListener("click", openDrawer);
-
-    document
-      .getElementById("closeDrawer")
-      .addEventListener("click", closeDrawer);
-
-    drawerOverlay.addEventListener("click", closeDrawer);
-
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape") {
-        closeDrawer();
-      }
-    });
-
+    // ==========================================
     // Initial render
-    renderSavedPlaces();
+    // ==========================================
+
+    updateSelectedLocation(
+      DEFAULT_LOCATION.lat,
+      DEFAULT_LOCATION.lng,
+      { pan: false }
+    );
+
+    renderFavorites();
+    renderRecent();
+
   </script>
-
-
-</body></html>
+</body>
+</html>
