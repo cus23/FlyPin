@@ -83,7 +83,7 @@ final class CompanionModel: ObservableObject {
                         Task { @MainActor in self?.status = message }
                     }
                     status = "檔案已驗證，正在向 iPhone 要求掛載 Developer Image…"
-                    try await bridge.mountDeveloperImage(DeveloperImageStore.paths)
+                    try await bridge.installDeveloperImage(from: DeveloperImageStore.paths.directory)
                 }
 
                 isPrepared = true
