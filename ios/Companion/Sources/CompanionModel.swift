@@ -15,6 +15,7 @@ final class CompanionModel: ObservableObject {
     @Published private(set) var isBusy = false
 
     private let bridge = DeveloperServiceBridge()
+    private var pendingHandoff = false
 
     init() {
         isPrepared = UserDefaults.standard.bool(forKey: "flypin.devicePrepared")
@@ -33,6 +34,7 @@ final class CompanionModel: ObservableObject {
         }
 
         coordinate = newCoordinate
+        pendingHandoff = true
         if isPrepared {
             Task { await applySelectedCoordinate() }
         } else {
@@ -92,7 +94,14 @@ final class CompanionModel: ObservableObject {
 
                 isPrepared = true
                 UserDefaults.standard.set(true, forKey: "flypin.devicePrepared")
-                status = "裝置已準備完成。現在可從 FlyPin 網頁選擇位置並套用。"
+                if pendingHandoff {
+                    try await bridge.setLocation(coordinate)
+                    isSimulating = true
+                    pendingHandoff = false
+                    status = "裝置已準備完成，並已套用網頁傳入的座標。"
+                } else {
+                    status = "裝置已準備完成。現在可從 FlyPin 網頁選擇位置並套用。"
+                }
             } catch {
                 isPrepared = false
                 UserDefaults.standard.set(false, forKey: "flypin.devicePrepared")
@@ -125,6 +134,7 @@ final class CompanionModel: ObservableObject {
             isPrepared = true
             UserDefaults.standard.set(true, forKey: "flypin.devicePrepared")
             isSimulating = true
+            pendingHandoff = false
             status = "定位模擬已套用：\(coordinate.latitude), \(coordinate.longitude)"
         } catch {
             isPrepared = false
