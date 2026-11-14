@@ -473,6 +473,22 @@
       line-height: 1.6;
     }
 
+    .steps-total {
+      margin: 2px 0 5px;
+      font-family: "DM Serif Display", serif;
+      font-size: 38px;
+      line-height: 1.15;
+      color: var(--accent-dark);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .steps-meta {
+      margin-bottom: 13px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
     .backup-actions {
       display: flex;
       flex-direction: column;
@@ -669,6 +685,18 @@
             <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">Open the link on your iPhone, then tap “Open FlyPin Companion”.</div>
             <button id="closeHandoff" class="btn btn-light" type="button" style="margin-top:8px">Close</button>
           </div>
+        </section>
+
+        <section class="panel" id="stepsPanel">
+          <h2 class="section-title">Today's steps</h2>
+          <div class="steps-total" id="stepsTotal">—</div>
+          <div class="steps-meta" id="stepsMeta">Connect to FlyPin Companion to read your iPhone's step count.</div>
+          <button id="syncSteps" class="btn btn-primary action-button" type="button">
+            Sync steps from iPhone
+          </button>
+          <p class="backup-description" style="margin:10px 0 0">
+            Source: iPhone motion sensor via FlyPin Companion. This displays device-detected steps; it does not add or edit Apple Health records.
+          </p>
         </section>
 
         <nav class="side-menu" aria-label="Location menu">
@@ -1077,6 +1105,71 @@
       renderRecent();
       return true;
     }
+
+    // ==========================================
+    // iPhone step-count handoff (Core Motion)
+    // ==========================================
+
+    const STEP_STORAGE_KEY = "flypin_motion_steps";
+
+    function renderStepCount(record) {
+      const total = $("stepsTotal");
+      const meta = $("stepsMeta");
+      if (!record || !Number.isSafeInteger(record.steps) || record.steps < 0) {
+        total.textContent = "—";
+        meta.textContent = "Connect to FlyPin Companion to read your iPhone's step count.";
+        return;
+      }
+
+      const measuredAt = new Date(record.measuredAt);
+      if (Number.isNaN(measuredAt.getTime()) || measuredAt.toDateString() !== new Date().toDateString()) {
+        total.textContent = "—";
+        meta.textContent = "No step count has been synced for today yet.";
+        return;
+      }
+
+      total.textContent = record.steps.toLocaleString();
+      meta.textContent = `Read from iPhone motion sensor at ${measuredAt.toLocaleTimeString()} · FlyPin Companion`;
+    }
+
+    function syncStepCountFromCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const rawSteps = params.get("steps");
+      const measuredAt = params.get("stepsDate");
+
+      if (rawSteps !== null && measuredAt) {
+        const steps = Number(rawSteps);
+        if (Number.isSafeInteger(steps) && steps >= 0) {
+          const record = { steps, measuredAt };
+          try {
+            localStorage.setItem(STEP_STORAGE_KEY, JSON.stringify(record));
+          } catch (error) {
+            console.warn("Could not save step-count snapshot.", error);
+          }
+        }
+        params.delete("steps");
+        params.delete("stepsDate");
+        const cleanURL = new URL(window.location.href);
+        cleanURL.search = params.toString();
+        history.replaceState({}, "", cleanURL.toString());
+      }
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STEP_STORAGE_KEY) || "null");
+        renderStepCount(saved);
+      } catch (error) {
+        renderStepCount(null);
+      }
+    }
+
+    $("syncSteps").addEventListener("click", () => {
+      if (!/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        showMessage("Open FlyPin in Safari on your iPhone to sync its step count.");
+        return;
+      }
+      showMessage("Opening FlyPin Companion to read today's steps…");
+      window.location.href = "flypin-companion://get-steps";
+    });
 
     // ==========================================
     // iPhone Companion handoff
@@ -1541,6 +1634,8 @@
     // ==========================================
     // Initial render
     // ==========================================
+
+    syncStepCountFromCallback();
 
     updateSelectedLocation(
       DEFAULT_LOCATION.lat,

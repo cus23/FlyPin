@@ -15,6 +15,17 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                Section("今日步數") {
+                    Button {
+                        Task { await model.readTodayStepsAndReturnToWeb() }
+                    } label: {
+                        Label("讀取今日步數並返回 FlyPin", systemImage: "figure.walk")
+                    }
+                    Text("資料來自 iPhone Core Motion 動作感測器，讀取裝置實際偵測的步數；不會手動新增或修改 Apple 健康資料。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section("裝置配對") {
                     HStack {
                         Text("配對檔")

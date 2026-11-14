@@ -33,6 +33,8 @@
             </array>
         </dict>
     </array>
+    <key>NSMotionUsageDescription</key>
+    <string>FlyPin Companion reads the step count detected by this iPhone to display your daily activity in FlyPin.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>FlyPin Companion needs local network access to connect to this iPhone's developer service through LocalDevVPN.</string>
     <key>UILaunchScreen</key>
