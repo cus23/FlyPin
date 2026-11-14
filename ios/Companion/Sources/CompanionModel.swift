@@ -16,6 +16,10 @@ final class CompanionModel: ObservableObject {
 
     private let bridge = DeveloperServiceBridge()
 
+    init() {
+        isPrepared = UserDefaults.standard.bool(forKey: "flypin.devicePrepared")
+    }
+
     func handleIncomingURL(_ url: URL) {
         guard url.scheme == "flypin-companion",
               url.host == "set-location",
@@ -87,9 +91,11 @@ final class CompanionModel: ObservableObject {
                 }
 
                 isPrepared = true
+                UserDefaults.standard.set(true, forKey: "flypin.devicePrepared")
                 status = "裝置已準備完成。現在可從 FlyPin 網頁選擇位置並套用。"
             } catch {
                 isPrepared = false
+                UserDefaults.standard.set(false, forKey: "flypin.devicePrepared")
                 status = "準備失敗：\(error.localizedDescription)"
                 await bridge.disconnect()
             }
@@ -111,15 +117,18 @@ final class CompanionModel: ObservableObject {
             try await bridge.connect(pairingFile: PairingFileStore.fileURL)
             guard try await bridge.hasMountedDeveloperImage() else {
                 isPrepared = false
+                UserDefaults.standard.set(false, forKey: "flypin.devicePrepared")
                 status = "Developer Image 尚未掛載。請先按「連線與準備」。"
                 return
             }
             try await bridge.setLocation(coordinate)
             isPrepared = true
+            UserDefaults.standard.set(true, forKey: "flypin.devicePrepared")
             isSimulating = true
             status = "定位模擬已套用：\(coordinate.latitude), \(coordinate.longitude)"
         } catch {
             isPrepared = false
+            UserDefaults.standard.set(false, forKey: "flypin.devicePrepared")
             isSimulating = false
             status = "套用失敗：\(error.localizedDescription)"
             await bridge.disconnect()
