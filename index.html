@@ -663,6 +663,15 @@
           <button id="confirmFly" class="btn btn-primary action-button" type="button">
             Confirm Fly
           </button>
+          <button id="sendToIPhone" class="btn btn-primary action-button" type="button">
+            Send location to iPhone
+          </button>
+          <div id="handoffPanel" hidden style="margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">Scan with your iPhone camera</div>
+            <div id="handoffQr" style="display:flex;justify-content:center"></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5">Open the link on your iPhone, then tap “Open FlyPin Companion”.</div>
+            <button id="closeHandoff" class="btn btn-light" type="button" style="margin-top:8px">Close</button>
+          </div>
         </section>
 
         <nav class="side-menu" aria-label="Location menu">
@@ -1071,6 +1080,58 @@
       renderRecent();
 
       showMessage("Location saved in FlyPin.");
+    });
+
+    // ==========================================
+    // iPhone Companion handoff
+    // ==========================================
+
+    function buildCompanionURL() {
+      const params = new URLSearchParams({
+        lat: selectedLocation.lat.toFixed(6),
+        lon: selectedLocation.lng.toFixed(6)
+      });
+      return `flypin-companion://set-location?${params.toString()}`;
+    }
+
+    function buildHandoffPageURL() {
+      const url = new URL("./handoff.html", window.location.href);
+      url.searchParams.set("lat", selectedLocation.lat.toFixed(6));
+      url.searchParams.set("lon", selectedLocation.lng.toFixed(6));
+      return url.toString();
+    }
+
+    $("sendToIPhone").addEventListener("click", () => {
+      const companionURL = buildCompanionURL();
+      const isAppleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isAppleMobile) {
+        showMessage("Opening FlyPin Companion…");
+        window.location.href = companionURL;
+        return;
+      }
+
+      const panel = $("handoffPanel");
+      const qr = $("handoffQr");
+      panel.hidden = false;
+      qr.innerHTML = "";
+
+      if (typeof QRCode === "undefined") {
+        showMessage("QR generator unavailable. Open FlyPin on your iPhone instead.");
+        return;
+      }
+
+      new QRCode(qr, {
+        text: buildHandoffPageURL(),
+        width: 190,
+        height: 190,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      showMessage("Scan the QR code with your iPhone.");
+    });
+
+    $("closeHandoff").addEventListener("click", () => {
+      $("handoffPanel").hidden = true;
     });
 
     // ==========================================
