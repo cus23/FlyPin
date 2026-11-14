@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: flypin-ios-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-15
@@ -68,6 +72,9 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/release/FlyPinCompanion-unsigned.zip
           ditto "$APP_PATH" build/ipa/Payload/FlyPinCompanion.app
           (cd build/ipa && /usr/bin/zip -qry ../release/FlyPinCompanion-unsigned.ipa Payload)
+          /usr/bin/unzip -t build/release/FlyPinCompanion-unsigned.ipa
+          /usr/bin/unzip -Z1 build/release/FlyPinCompanion-unsigned.ipa | grep -qx 'Payload/FlyPinCompanion.app/Info.plist'
+          plutil -lint "$APP_PATH/Info.plist"
           shasum -a 256 build/release/FlyPinCompanion-unsigned.zip build/release/FlyPinCompanion-unsigned.ipa > build/release/SHA256SUMS.txt
 
       - name: Upload short-lived workflow artifact
