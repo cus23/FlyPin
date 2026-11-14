@@ -24,11 +24,6 @@ final class CompanionModel: ObservableObject {
     func handleIncomingURL(_ url: URL) {
         guard url.scheme == "flypin-companion" else { return }
 
-        if url.host == "get-health-steps" {
-            Task { await readHealthStepsAndReturnToWeb() }
-            return
-        }
-
         guard url.host == "set-location",
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let latitudeText = components.queryItems?.first(where: { $0.name == "lat" })?.value,
@@ -45,27 +40,6 @@ final class CompanionModel: ObservableObject {
             Task { await applySelectedCoordinate() }
         } else {
             status = "已收到網頁座標。先完成「連線與準備」，之後可直接從網頁切換位置。"
-        }
-    }
-
-    func readHealthStepsAndReturnToWeb() async {
-        status = "正在讀取 Apple 健康今日步數…"
-        do {
-            let steps = try await StepCounterService.queryTodaySteps()
-            let measuredAt = ISO8601DateFormatter().string(from: Date())
-            status = "已讀取 Apple 健康步數：\(steps.formatted()) 步"
-            var components = URLComponents(string: "https://cus23.github.io/FlyPin/")!
-            components.queryItems = [
-                URLQueryItem(name: "healthSteps", value: String(steps)),
-                URLQueryItem(name: "healthStepsDate", value: measuredAt)
-            ]
-            guard let callbackURL = components.url else {
-                throw StepCounterError.invalidCallback
-            }
-            _ = await UIApplication.shared.open(callbackURL)
-        } catch {
-            status = "讀取 Apple 健康失敗：\(error.localizedDescription)"
-            errorMessage = status
         }
     }
 
