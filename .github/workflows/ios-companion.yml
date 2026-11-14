@@ -49,11 +49,16 @@ jobs:
           mkdir -p "$ICON_DIR"
           WIDTH="$(sips -g pixelWidth "$SOURCE" | awk '/pixelWidth/ {print $2}')"
           HEIGHT="$(sips -g pixelHeight "$SOURCE" | awk '/pixelHeight/ {print $2}')"
-          if [[ "$WIDTH" != "1024" || "$HEIGHT" != "1024" ]]; then
-            echo "appicon.png must be exactly 1024x1024 pixels; found ${WIDTH}x${HEIGHT}." >&2
+          if [[ -z "$WIDTH" || -z "$HEIGHT" ]]; then
+            echo "Could not read appicon.png dimensions." >&2
             exit 1
           fi
-          cp "$SOURCE" "$ICON_DIR/AppIcon.png"
+          echo "Source App Icon: ${WIDTH}x${HEIGHT}; resizing to 1024x1024."
+          sips -z 1024 1024 "$SOURCE" --out "$ICON_DIR/AppIcon.png" >/dev/null
+          OUT_WIDTH="$(sips -g pixelWidth "$ICON_DIR/AppIcon.png" | awk '/pixelWidth/ {print $2}')"
+          OUT_HEIGHT="$(sips -g pixelHeight "$ICON_DIR/AppIcon.png" | awk '/pixelHeight/ {print $2}')"
+          test "$OUT_WIDTH" = "1024"
+          test "$OUT_HEIGHT" = "1024"
           cat > "$ICON_DIR/Contents.json" <<'JSON'
           {
             "images" : [
