@@ -6,7 +6,11 @@ on:
     branches:
       - feat/ios-companion-mvp
     paths:
-      - "ios/Companion/**"
+      - "ios/Companion/Sources/**"
+      - "ios/Companion/project.yml"
+      - "ios/Companion/Info.plist"
+      - "ios/Companion/FlyPinCompanion.entitlements"
+      - "ios/Companion/scripts/fetch-idevice.sh"
       - ".github/workflows/ios-companion.yml"
 
 permissions:
