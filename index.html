@@ -1,13 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f7f4ed">
-  <meta name="description" content="FlyPin — Choose, save, and manage locations on a map.">
+  <meta name="description" content="FlyPin — Choose and manage locations on a map.">
 
-  <title>FlyPin — Choose Your Location</title>
+  <title>FlyPin</title>
 
   <link rel="icon" type="image/png" href="./icon.png">
   <link rel="apple-touch-icon" href="./icon.png">
@@ -16,10 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  >
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
   <style>
     :root {
@@ -48,8 +44,7 @@
       font-family: "DM Sans", sans-serif;
     }
 
-    button,
-    input {
+    button, input {
       font: inherit;
     }
 
@@ -77,18 +72,14 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
     }
 
-    .brand-mark {
+    .brand-icon {
       width: 36px;
       height: 36px;
-      display: grid;
-      place-items: center;
+      object-fit: contain;
       border-radius: 50%;
-      background: var(--accent);
-      color: white;
-      font-size: 19px;
     }
 
     .brand-name {
@@ -116,32 +107,65 @@
       align-items: stretch;
     }
 
+    .map-panel {
+      position: relative;
+      grid-column: 1;
+      grid-row: 1;
+      min-height: 650px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #e9e6dd;
+      box-shadow: var(--shadow);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      min-height: 650px;
+      z-index: 1;
+    }
+
+    .map-tip {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      z-index: 400;
+      transform: translateX(-50%);
+      padding: 9px 15px;
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 30px;
+      background: rgba(255,253,248,0.94);
+      color: #625c50;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .map-attribution {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 400;
+      padding: 5px 8px;
+      border-radius: 5px;
+      background: rgba(255,253,248,0.9);
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .map-attribution a {
+      color: var(--accent-dark);
+    }
+
     .sidebar {
       grid-column: 2;
       grid-row: 1;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 16px;
       min-width: 0;
-    }
-
-    .intro {
-      padding: 4px 2px 8px;
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-family: "DM Serif Display", serif;
-      font-size: 36px;
-      font-weight: 400;
-      line-height: 1.12;
-    }
-
-    .intro p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.7;
     }
 
     .panel {
@@ -219,10 +243,6 @@
       border-color: var(--soft);
     }
 
-    .btn-danger {
-      color: var(--danger);
-    }
-
     .search-results {
       display: none;
       margin-top: 10px;
@@ -270,7 +290,8 @@
       gap: 10px;
     }
 
-    .field label {
+    .field label,
+    .combined-input label {
       display: block;
       margin-bottom: 7px;
       color: var(--muted);
@@ -290,14 +311,6 @@
 
     .combined-input {
       margin-top: 12px;
-    }
-
-    .combined-input label {
-      display: block;
-      margin-bottom: 7px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
     }
 
     .selected-location {
@@ -328,21 +341,54 @@
       font-size: 11px;
     }
 
-    .confirm-btn {
+    .action-button {
       width: 100%;
-      height: 44px;
-      margin-top: 13px;
+      height: 43px;
+      margin-top: 12px;
       font-size: 13px;
     }
 
-    .notice {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-left: 3px solid var(--accent);
-      background: #f7f1e9;
-      color: #756958;
+    /* Right sidebar navigation */
+
+    .side-menu {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .menu-button {
+      min-width: 0;
+      padding: 11px 5px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
       font-size: 11px;
-      line-height: 1.6;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .menu-button:hover {
+      background: var(--soft);
+      color: var(--text);
+    }
+
+    .menu-button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .menu-content {
+      display: none;
+    }
+
+    .menu-content.active {
+      display: block;
     }
 
     .list-header {
@@ -372,7 +418,7 @@
       display: flex;
       flex-direction: column;
       gap: 7px;
-      max-height: 180px;
+      max-height: 350px;
       overflow-y: auto;
     }
 
@@ -429,72 +475,27 @@
     }
 
     .empty-state {
-      padding: 15px 5px;
+      padding: 24px 8px;
       color: var(--muted);
       text-align: center;
-      font-size: 11px;
+      font-size: 12px;
+    }
+
+    .backup-description {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
     }
 
     .backup-actions {
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 9px;
     }
 
     .backup-actions .btn {
-      flex: 1;
-      padding: 0 8px;
-    }
-
-    .map-panel {
-      position: relative;
-      grid-column: 1;
-      grid-row: 1;
-      min-height: 650px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #e9e6dd;
-      box-shadow: var(--shadow);
-    }
-
-    #map {
       width: 100%;
-      height: 100%;
-      min-height: 650px;
-      z-index: 1;
-    }
-
-    .map-tip {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      z-index: 400;
-      transform: translateX(-50%);
-      padding: 9px 15px;
-      border: 1px solid rgba(255,255,255,0.8);
-      border-radius: 30px;
-      background: rgba(255,253,248,0.94);
-      color: #625c50;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-      font-size: 11px;
-      white-space: nowrap;
-      pointer-events: none;
-    }
-
-    .map-attribution {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      z-index: 400;
-      padding: 5px 8px;
-      border-radius: 5px;
-      background: rgba(255,253,248,0.9);
-      color: var(--muted);
-      font-size: 10px;
-    }
-
-    .map-attribution a {
-      color: var(--accent-dark);
     }
 
     .status-message {
@@ -532,16 +533,9 @@
         padding: 22px 18px;
       }
 
-      .sidebar {
-        order: 2;
-        grid-column: auto;
-        grid-row: auto;
-      }
-
       .map-panel {
-        order: 1;
-        grid-column: auto;
-        grid-row: auto;
+        grid-column: 1;
+        grid-row: 1;
         min-height: 440px;
       }
 
@@ -549,8 +543,9 @@
         min-height: 440px;
       }
 
-      .intro {
-        padding-top: 4px;
+      .sidebar {
+        grid-column: 1;
+        grid-row: 2;
       }
     }
 
@@ -562,6 +557,11 @@
 
       .brand-name {
         font-size: 22px;
+      }
+
+      .brand-icon {
+        width: 32px;
+        height: 32px;
       }
 
       .header-note {
@@ -577,10 +577,6 @@
       .map-panel,
       #map {
         min-height: 370px;
-      }
-
-      h1 {
-        font-size: 31px;
       }
 
       .panel {
@@ -600,19 +596,23 @@
 
     <header>
       <div class="brand">
-        <div class="brand-mark">⌖</div>
+        <img class="brand-icon" src="./icon.png" alt="FlyPin icon">
         <div class="brand-name">FlyPin</div>
       </div>
       <div class="header-note">Your personal location picker</div>
     </header>
 
     <main>
-      <aside class="sidebar">
 
-        <section class="intro">
-          <h1>Choose your destination.</h1>
-          <p>Search for a place or select any point on the map. Save your favorite locations for later.</p>
-        </section>
+      <section class="map-panel">
+        <div class="map-tip">Click anywhere on the map to place your pin</div>
+        <div id="map" aria-label="Interactive location map"></div>
+        <div class="map-attribution">
+          Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
+        </div>
+      </section>
+
+      <aside class="sidebar">
 
         <section class="panel">
           <h2 class="section-title">Search a place</h2>
@@ -648,12 +648,8 @@
           </div>
 
           <div class="coordinate-actions">
-            <button id="applyCoordinates" class="btn btn-primary" type="button">
-              Apply
-            </button>
-            <button id="copyCoordinates" class="btn" type="button">
-              Copy
-            </button>
+            <button id="applyCoordinates" class="btn btn-primary" type="button">Apply</button>
+            <button id="copyCoordinates" class="btn" type="button">Copy</button>
           </div>
 
           <div class="combined-input">
@@ -676,20 +672,28 @@
             <div class="selected-hint">Click the map or drag the pin to change.</div>
           </div>
 
-          <button id="saveFavorite" class="btn btn-soft confirm-btn" type="button">
+          <button id="saveFavorite" class="btn btn-soft action-button" type="button">
             Save to Favorites
           </button>
 
-          <button id="confirmFly" class="btn btn-primary confirm-btn" type="button">
+          <button id="confirmFly" class="btn btn-primary action-button" type="button">
             Confirm Fly
           </button>
-
-          <div class="notice">
-            Confirm Fly saves the selected coordinates inside FlyPin. It does not change your iPhone's system GPS location or the location reported to other apps.
-          </div>
         </section>
 
-        <section class="panel">
+        <nav class="side-menu" aria-label="Location menu">
+          <button class="menu-button active" type="button" data-menu="favorites">
+            Favorites
+          </button>
+          <button class="menu-button" type="button" data-menu="recent">
+            Recent
+          </button>
+          <button class="menu-button" type="button" data-menu="backup">
+            Backup
+          </button>
+        </nav>
+
+        <section id="favoritesPanel" class="panel menu-content active">
           <div class="list-header">
             <h2 class="section-title">Favorites</h2>
             <button id="clearFavorites" class="text-btn" type="button">Clear all</button>
@@ -699,7 +703,7 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section id="recentPanel" class="panel menu-content">
           <div class="list-header">
             <h2 class="section-title">Recent locations</h2>
             <button id="clearRecent" class="text-btn" type="button">Clear</button>
@@ -709,8 +713,11 @@
           </div>
         </section>
 
-        <section class="panel">
+        <section id="backupPanel" class="panel menu-content">
           <h2 class="section-title">Backup your data</h2>
+          <p class="backup-description">
+            Export your saved locations or import a previous FlyPin backup.
+          </p>
           <div class="backup-actions">
             <button id="exportData" class="btn" type="button">Export JSON</button>
             <button id="importData" class="btn" type="button">Import JSON</button>
@@ -719,14 +726,6 @@
         </section>
 
       </aside>
-
-      <section class="map-panel">
-        <div class="map-tip">Click anywhere on the map to place your pin</div>
-        <div id="map" aria-label="Interactive location map"></div>
-        <div class="map-attribution">
-          Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
-        </div>
-      </section>
     </main>
   </div>
 
@@ -904,6 +903,30 @@
     }
 
     // ==========================================
+    // Sidebar menu
+    // ==========================================
+
+    const menuButtons = document.querySelectorAll(".menu-button");
+    const menuPanels = document.querySelectorAll(".menu-content");
+
+    menuButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.menu;
+
+        menuButtons.forEach((item) => {
+          item.classList.toggle("active", item === button);
+        });
+
+        menuPanels.forEach((panel) => {
+          panel.classList.toggle(
+            "active",
+            panel.id === `${target}Panel`
+          );
+        });
+      });
+    });
+
+    // ==========================================
     // Selected location
     // ==========================================
 
@@ -1057,9 +1080,7 @@
       recentLocations = nextRecent;
       renderRecent();
 
-      showMessage(
-        "Location saved in FlyPin. Your iPhone system location has not changed."
-      );
+      showMessage("Location saved in FlyPin.");
     });
 
     // ==========================================
@@ -1105,7 +1126,6 @@
         }
 
         const results = await response.json();
-
         renderSearchResults(results);
 
       } catch (error) {
@@ -1319,9 +1339,7 @@
 
     $("clearFavorites").addEventListener("click", () => {
       if (!favorites.length) return;
-
       if (!confirm("Delete all favorite locations?")) return;
-
       if (!savePlaces(STORAGE_KEYS.favorites, [])) return;
 
       favorites = [];
@@ -1331,9 +1349,7 @@
 
     $("clearRecent").addEventListener("click", () => {
       if (!recentLocations.length) return;
-
       if (!confirm("Clear recent locations?")) return;
-
       if (!savePlaces(STORAGE_KEYS.recent, [])) return;
 
       recentLocations = [];
@@ -1425,11 +1441,8 @@
           "Replace your current favorites and recent locations with this backup?"
         );
 
-        if (!shouldReplace) {
-          return;
-        }
+        if (!shouldReplace) return;
 
-        // Save both datasets before updating the displayed state.
         const oldFavorites = favorites;
         const oldRecent = recentLocations;
 
@@ -1438,9 +1451,7 @@
           importedFavorites
         );
 
-        if (!favoritesSaved) {
-          return;
-        }
+        if (!favoritesSaved) return;
 
         const recentSaved = savePlaces(
           STORAGE_KEYS.recent,
@@ -1448,7 +1459,6 @@
         );
 
         if (!recentSaved) {
-          // Roll back the favorites if the second write fails.
           savePlaces(STORAGE_KEYS.favorites, oldFavorites);
           savePlaces(STORAGE_KEYS.recent, oldRecent);
           return;
@@ -1483,11 +1493,9 @@
     renderFavorites();
     renderRecent();
 
-    // Refresh Leaflet map size after layout is established.
     window.addEventListener("load", () => {
       setTimeout(() => map.invalidateSize(), 100);
     });
-
   </script>
 </body>
 </html>
